@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+"""Script for logging an ascent using the ascent module."""
+
+
+import datetime
+import sys
+
+from ascent import Ascent, AscentError, AscentLoggingError
+
+
+# Preliminaries
+
+args = sys.argv[1:]
+
+usage = "Usage: log_ascent [--help] csvfile"
+
+if not args:
+    sys.exit(usage)
+
+if args[0] == "--help":
+    print(usage)
+    sys.exit(0)
+
+csvfile = args[0]
+
+
+# Get ascent info
+
+route = input("Enter the name of the route: ")
+grade = input("Enter the grade of the route: ")
+crag = input("Enter the name of the crag where the route is located: ")
+
+date_in = input(
+    "Enter the date of the ascent in YYYY-MM-DD format "
+    "(or 't' for today or 'y' for yesterday): "
+)
+
+
+# Log the ascent
+
+
+def fail_to_log_ascent(reason):
+    sys.exit(f"Failed to log the above ascent: {reason}")
+
+
+if date_in in {"t", "y"}:
+    today = datetime.date.today()
+
+    if date_in == "t":
+        date = today
+    else:
+        date = today - datetime.timedelta(days=1)
+else:
+    try:
+        date = datetime.date.fromisoformat(date_in)
+    except ValueError:
+        fail_to_log_ascent("date must be a valid date in YYYY-MM-DD format")
+
+
+try:
+    ascent = Ascent(route, grade, crag, date)
+except AscentError as e:
+    fail_to_log_ascent(e)
+
+
+print(f"Ascent to be logged: {ascent}")
+
+resp = input(f"Log the above ascent in {csvfile} (y/n)? ")
+
+while True:
+    if resp == "y":
+        try:
+            ascent.log(csvfile)
+            break
+        except AscentLoggingError as e:
+            fail_to_log_ascent(e)
+
+    if resp == "n":
+        print("Aborted logging the above ascent")
+        break
+
+    resp = input("Oops! Valid inputs are 'y' or 'n'. Please try again: ")
