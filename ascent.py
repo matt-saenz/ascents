@@ -86,17 +86,20 @@ class Ascent:
 
         open_args = dict(encoding="utf-8", newline="")
 
+        # CSV reader/writer args
+        csv_args = dict(dialect="unix")
+
         try:
             f = open(csvfile, "r+", **open_args)
         except FileNotFoundError:
             with open(csvfile, "w", **open_args) as f:
-                writer = csv.writer(f)
+                writer = csv.writer(f, **csv_args)
                 writer.writerows([fields, self.row])
 
             print(f"Created new file {csvfile}")
         else:
             with f:
-                reader = csv.reader(f)
+                reader = csv.reader(f, **csv_args)
 
                 try:
                     header = next(reader)
@@ -112,7 +115,7 @@ class Ascent:
                             f"That ascent was already logged with a date of {row[3]}"
                         )
 
-                writer = csv.writer(f)
+                writer = csv.writer(f, **csv_args)
                 writer.writerow(self.row)
 
         print(f"Successfully logged ascent: {self.row}")
