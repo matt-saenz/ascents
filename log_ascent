@@ -40,8 +40,16 @@ date_in = input(
 # Log the ascent
 
 
+def abort_logging_ascent():
+    print("Aborted logging the above ascent")
+    sys.exit(0)
+
+
 def fail_to_log_ascent(reason):
     sys.exit(f"Failed to log the above ascent: {reason}")
+
+
+oops = "Oops! Valid inputs are 'y' or 'n'. Please try again: "
 
 
 if date_in in {"t", "y"}:
@@ -59,6 +67,37 @@ else:
 
 
 try:
+    f = open("known_crags.txt", encoding="utf-8")
+except FileNotFoundError:
+    known_crags = []
+else:
+    with f:
+        known_crags = f.read().splitlines()
+
+unknown_crag = crag not in known_crags
+
+if unknown_crag:
+    print(f"Warning: '{crag}' is not a known crag")
+
+    if known_crags:
+        print(f"Known crags currently include:")
+
+        for known_crag in known_crags:
+            print(known_crag)
+
+    cont = input("Continue logging the above ascent (y/n)? ")
+
+    while True:
+        if cont == "y":
+            break
+
+        if cont == "n":
+            abort_logging_ascent()
+
+        cont = input(oops)
+
+
+try:
     ascent = Ascent(route, grade, crag, date)
 except AscentError as e:
     fail_to_log_ascent(e)
@@ -66,18 +105,24 @@ except AscentError as e:
 
 print(f"Ascent to be logged: {ascent}")
 
-resp = input(f"Log the above ascent in {csvfile} (y/n)? ")
+log = input(f"Log the above ascent in {csvfile} (y/n)? ")
 
 while True:
-    if resp == "y":
+    if log == "y":
         try:
             ascent.log(csvfile)
             break
         except AscentLoggingError as e:
             fail_to_log_ascent(e)
 
-    if resp == "n":
-        print("Aborted logging the above ascent")
-        break
+    if log == "n":
+        abort_logging_ascent()
 
-    resp = input("Oops! Valid inputs are 'y' or 'n'. Please try again: ")
+    log = input(oops)
+
+
+if unknown_crag:
+    with open("known_crags.txt", "a", encoding="utf-8") as f:
+        f.write(f"{crag}\n")
+
+    print(f"Added '{crag}' to known crags")
