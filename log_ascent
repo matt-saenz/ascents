@@ -80,7 +80,7 @@ if unknown_crag:
     print(f"Warning: '{crag}' is not a known crag")
 
     if known_crags:
-        print(f"Known crags currently include:")
+        print("Known crags currently include:")
 
         for known_crag in known_crags:
             print(known_crag)
