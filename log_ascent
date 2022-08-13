@@ -80,7 +80,9 @@ if unknown_crag:
     print(f"Warning: '{crag}' is not a known crag")
 
     if known_crags:
-        print("Known crags currently include:", *known_crags, sep="\n")
+        print(
+            "Known crags currently include:", "\n".join(sorted(known_crags)), sep="\n"
+        )
 
     cont = input("Continue logging the above ascent (y/n)? ")
 
