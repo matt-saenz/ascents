@@ -80,9 +80,7 @@ if unknown_crag:
     print(f"Warning: '{crag}' is not a known crag")
 
     if known_crags:
-        print(
-            "Known crags currently include:", "\n".join(sorted(known_crags)), sep="\n"
-        )
+        print("Known crags currently include:", "\n".join(known_crags), sep="\n")
 
     cont = input("Continue logging the above ascent (y/n)? ")
 
@@ -121,7 +119,10 @@ while True:
 
 
 if unknown_crag:
-    with open("known_crags.txt", "a", encoding="utf-8") as f:
-        f.write(f"{crag}\n")
+    known_crags.append(crag)
+    known_crags.sort()
+
+    with open("known_crags.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(known_crags) + "\n")
 
     print(f"Added '{crag}' to known crags")
