@@ -30,7 +30,7 @@ def get_route_info():
     grade = input("Enter the grade of the route: ")
     crag = input("Enter the name of the crag where the route is located: ")
 
-    return route, grade, crag
+    return [route, grade, crag]
 
 
 # Allow user to provide input again

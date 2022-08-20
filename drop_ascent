@@ -18,60 +18,52 @@ if not args:
 csvfile = args[0]
 
 
-# Not collecting date since ascents are unique on route, grade, and crag
+try:
+    old = utils.open_csvfile(csvfile)
+except FileNotFoundError:
+    sys.exit(f"Error: {csvfile} not found")
 
-route, grade, crag = utils.get_route_info()
+temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False)
+
+# Note that the operations below assume that csvfile is a valid csvfile produced
+# via the ascent module
+
+with old, temp:
+    row_to_drop = utils.get_route_info()
+
+    reader = utils.csv_reader(old)
+    writer = utils.csv_writer(temp)
+
+    header = next(reader)
+    writer.writerow(header)
+
+    row_dropped = False
+
+    for row in reader:
+        if row[:3] != row_to_drop:
+            writer.writerow(row)
+        else:
+            print(f"Ascent to be dropped: {row}")
+            row_dropped = True
 
 
-print(f"Ascent to be dropped: {route} {grade} at {crag}")
+if not row_dropped:
+    os.remove(temp.name)
+    sys.exit(f"No ascent found matching {row_to_drop}")
+
 
 drop = input(f"Drop the above ascent from {csvfile} (y/n)? ")
 
 while True:
     if drop == "y":
+        os.replace(temp.name, csvfile)
+        utils.update_known_crags(csvfile)
+        print("Successfully dropped the above ascent")
         break
 
     if drop == "n":
+        os.remove(temp.name)
         print("Aborted dropping the above ascent")
         sys.exit(0)
 
     drop = utils.oops_try_again()
-
-
-row_to_drop = [route, grade, crag]
-
-try:
-    old = utils.open_csvfile(csvfile)
-except FileNotFoundError:
-    sys.exit(f"Error: {csvfile} not found")
-else:
-    temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False)
-
-    with old, temp:
-        reader = utils.csv_reader(old)
-        writer = utils.csv_writer(temp)
-
-        header = next(reader)
-        writer.writerow(header)
-
-        # Because of the logic of csvfile, there should only ever be
-        # 0 or 1 rows dropped
-
-        rows_dropped = 0
-
-        for row in reader:
-            if row[:3] != row_to_drop:
-                writer.writerow(row)
-            else:
-                print(f"Dropping ascent: {row}")
-                rows_dropped += 1
-
-    os.replace(temp.name, csvfile)
-
-
-print(f"Dropped {rows_dropped} row(s) from {csvfile}")
-
-if rows_dropped:
-    utils.update_known_crags(csvfile)
-else:
-    print(f"No ascent found matching {row_to_drop}")
