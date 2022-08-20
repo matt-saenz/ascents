@@ -20,8 +20,8 @@ git clone https://github.com/matt-saenz/ascents.git
 # Move into local clone
 cd ascents/
 
-# Make log_ascent executable
-chmod u+x log_ascent
+# Make log_ascent and drop_ascent executable
+chmod u+x log_ascent drop_ascent
 
 # Add ascents/ directory to $PATH
 vim ~/.bash_profile
