@@ -7,6 +7,7 @@ import datetime
 import sys
 
 from ascent import Ascent, AscentError, AscentLoggingError
+import utils
 
 
 # Preliminaries
@@ -27,9 +28,7 @@ csvfile = args[0]
 
 # Get ascent info
 
-route = input("Enter the name of the route: ")
-grade = input("Enter the grade of the route: ")
-crag = input("Enter the name of the crag where the route is located: ")
+route, grade, crag = utils.get_route_info()
 
 date_in = input(
     "Enter the date of the ascent in YYYY-MM-DD format "
@@ -39,17 +38,12 @@ date_in = input(
 
 # Log the ascent
 
-
 def abort_logging_ascent():
     print("Aborted logging the above ascent")
     sys.exit(0)
 
-
 def fail_to_log_ascent(reason):
     sys.exit(f"Failed to log the above ascent: {reason}")
-
-
-oops = "Oops! Valid inputs are 'y' or 'n'. Please try again: "
 
 
 if date_in in {"t", "y"}:
@@ -66,13 +60,7 @@ else:
         fail_to_log_ascent("date must be a valid date in YYYY-MM-DD format")
 
 
-try:
-    f = open("known_crags.txt", encoding="utf-8")
-except FileNotFoundError:
-    known_crags = []
-else:
-    with f:
-        known_crags = f.read().splitlines()
+known_crags = utils.known_crags(csvfile)
 
 unknown_crag = crag not in known_crags
 
@@ -91,7 +79,7 @@ if unknown_crag:
         if cont == "n":
             abort_logging_ascent()
 
-        cont = input(oops)
+        cont = utils.oops_try_again()
 
 
 try:
@@ -115,14 +103,9 @@ while True:
     if log == "n":
         abort_logging_ascent()
 
-    log = input(oops)
+    log = utils.oops_try_again()
 
 
 if unknown_crag:
-    known_crags.append(crag)
-    known_crags.sort()
-
-    with open("known_crags.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(known_crags) + "\n")
-
+    utils.update_known_crags(csvfile)
     print(f"Added '{crag}' to known crags")

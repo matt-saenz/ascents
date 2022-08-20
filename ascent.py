@@ -1,9 +1,10 @@
 """Module defining the Ascent class."""
 
 
-import csv
 import datetime
 import re
+
+import utils
 
 
 class Ascent:
@@ -80,26 +81,17 @@ class Ascent:
 
         fields = ["route", "grade", "crag", "date"]
 
-        # Open with the following args, as recommended:
-        # https://docs.python.org/3/library/csv.html#csv.reader
-        # https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
-
-        open_args = dict(encoding="utf-8", newline="")
-
-        # CSV reader/writer args
-        csv_args = dict(dialect="unix")
-
         try:
-            f = open(csvfile, "r+", **open_args)
+            f = utils.open_csvfile(csvfile, "r+")
         except FileNotFoundError:
-            with open(csvfile, "w", **open_args) as f:
-                writer = csv.writer(f, **csv_args)
+            with utils.open_csvfile(csvfile, "w") as f:
+                writer = utils.csv_writer(f)
                 writer.writerows([fields, self.row])
 
             print(f"Created new file {csvfile}")
         else:
             with f:
-                reader = csv.reader(f, **csv_args)
+                reader = utils.csv_reader(f)
 
                 try:
                     header = next(reader)
@@ -115,7 +107,7 @@ class Ascent:
                             f"That ascent was already logged with a date of {row[3]}"
                         )
 
-                writer = csv.writer(f, **csv_args)
+                writer = utils.csv_writer(f)
                 writer.writerow(self.row)
 
         print(f"Successfully logged ascent: {self.row}")
