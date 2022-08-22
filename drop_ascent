@@ -3,12 +3,13 @@
 """Script for dropping an ascent."""
 
 
-import os
 import sys
-import tempfile
 
+from ascent import AscentLog, AscentLogError
 import utils
 
+
+# Preliminaries
 
 args = sys.argv[1:]
 
@@ -18,60 +19,42 @@ if not args:
 csvfile = args[0]
 
 
+# Load log
+
 try:
-    old = utils.open_csvfile(csvfile)
+    log = AscentLog(csvfile)
 except FileNotFoundError:
     sys.exit(f"Error: {csvfile} not found")
 
-temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False)
 
-# Note that the operations below assume that csvfile is a valid csvfile produced
-# via the ascent module
+# Find ascent to drop
 
-with old, temp:
-    row_to_drop = utils.get_route_info()
-
-    reader = utils.csv_reader(old)
-    writer = utils.csv_writer(temp)
-
-    header = next(reader)
-    writer.writerow(header)
-
-    row_dropped = False
-
-    for row in reader:
-        if row[:3] != row_to_drop:
-            writer.writerow(row)
-        else:
-            print(f"Ascent to be dropped: {row}")
-            row_dropped = True
+try:
+    ascent = log.find(*utils.get_route_info())
+except AscentLogError as e:
+    utils.fail("drop", e)
 
 
-if not row_dropped:
-    os.remove(temp.name)
-    sys.exit(f"No ascent found matching {row_to_drop}")
+# Drop the ascent
 
+print(f"Ascent to be dropped: {ascent.row}")
 
 drop = input(f"Drop the above ascent from {csvfile} (y/n)? ")
 
 while True:
     if drop == "y":
-        os.replace(temp.name, csvfile)
-        print("Successfully dropped the above ascent")
         break
 
     if drop == "n":
-        os.remove(temp.name)
-        print("Aborted dropping the above ascent")
-        sys.exit(0)
+        utils.abort("dropping")
 
     drop = utils.oops_try_again()
 
+try:
+    log.drop(ascent)
+except AscentLogError as e:
+    utils.fail("drop", e)
 
-utils.update_known_crags(csvfile)
-known_crags = utils.known_crags(csvfile)
+log.write(csvfile)
 
-crag = row_to_drop[2]
-
-if crag not in known_crags:
-    print(f"Dropped '{crag}' from known crags")
+print("Successfully dropped the above ascent")

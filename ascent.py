@@ -1,10 +1,12 @@
-"""Module defining the Ascent class."""
+"""Module defining the Ascent and AscentLog classes."""
 
 
+import csv
 import datetime
 import re
 
-import utils
+
+FIELDS = ["route", "grade", "crag", "date"]
 
 
 class Ascent:
@@ -55,6 +57,7 @@ class Ascent:
 
     @property
     def row(self):
+        """Row representation of the ascent (used for logging)."""
         return [self.route, self.grade, self.crag, self.date.isoformat()]
 
     def __repr__(self):
@@ -68,54 +71,126 @@ class Ascent:
     def __str__(self):
         return f"{self.route} {self.grade} at {self.crag} on {self.date.isoformat()}"
 
-    def log(self, csvfile: str):
+
+class AscentLog:
+    """
+    Log of rock climbing ascents.
+
+    Note that ascents are only logged once.
+    """
+
+    def __init__(self, csvfile: str | None = None):
         """
-        Log an ascent as a row in csvfile.
+        Create a new AscentLog object.
 
-        The file specified by csvfile must be a CSV file with headers route,
-        grade, crag, and date (in that exact order!) If the file specified by
-        csvfile is not found, it is created. Otherwise, the row for the new
-        ascent is appended to the file (after confirming the file has the
-        proper structure and the ascent has not already been logged).
+        csvfile: Path to existing log CSV file (optional).
+
+        If a csvfile is given, an existing log is loaded from the CSV file.
+        If left None (default), an empty log is created. Log CSV files are
+        created via the AscentLog.write() method.
         """
 
-        fields = ["route", "grade", "crag", "date"]
-
-        try:
-            f = utils.open_csvfile(csvfile, "r+")
-        except FileNotFoundError:
-            with utils.open_csvfile(csvfile, "w") as f:
-                writer = utils.csv_writer(f)
-                writer.writerows([fields, self.row])
-
-            print(f"Created new file {csvfile}")
+        if csvfile is None:
+            self.rows = []
         else:
-            with f:
-                reader = utils.csv_reader(f)
+            with _open_csvfile(csvfile) as f:
+                reader = _csv_reader(f)
 
                 try:
                     header = next(reader)
                 except StopIteration as e:
-                    raise AscentLoggingError(f"{csvfile} found but empty") from e
+                    raise AscentLogError(f"{csvfile} found but empty") from e
 
-                if header != fields:
-                    raise AscentLoggingError(f"{csvfile} missing proper header row")
+                if header != FIELDS:
+                    raise AscentLogError(f"{csvfile} missing proper header row")
 
-                for row in reader:
-                    if row[:3] == self.row[:3]:
-                        raise AscentLoggingError(
-                            f"That ascent was already logged with a date of {row[3]}"
-                        )
+                self.rows = [row for row in reader]
 
-                writer = utils.csv_writer(f)
-                writer.writerow(self.row)
+    @property
+    def crags(self):
+        """Crags in the log."""
+        return sorted({row[2] for row in self.rows})
 
-        print(f"Successfully logged ascent: {self.row}")
+    def add(self, ascent):
+        """Add an ascent to the log after confirming it doesn't already exist."""
+
+        for row in self.rows:
+            if ascent.row[:3] == row[:3]:
+                raise AscentLogError(
+                    f"That ascent was already logged with a date of {row[3]}"
+                )
+
+        self.rows.append(ascent.row)
+
+    def find(self, route, grade, crag):
+        """
+        Find an ascent in the log using the provided info and return it as an
+        Ascent object.
+
+        Note that since ascents are unique on route, grade, and crag, date is
+        not needed.
+        """
+
+        route_info = [route, grade, crag]
+
+        try:
+            i = [row[:3] for row in self.rows].index(route_info)
+        except ValueError:
+            raise AscentLogError(f"No ascent found matching {route_info}")
+
+        date = self.rows[i][3]
+
+        ascent = Ascent(*route_info, datetime.date.fromisoformat(date))
+
+        return ascent
+
+    def drop(self, ascent):
+        """Drop an ascent from the log."""
+
+        try:
+            self.rows.remove(ascent.row)
+        except ValueError:
+            raise AscentLogError("That ascent does not exist")
+
+    def write(self, csvfile):
+        """Write the log to a CSV file."""
+
+        with _open_csvfile(csvfile, "w") as f:
+            writer = _csv_writer(f)
+            writer.writerow(FIELDS)
+            writer.writerows(self.rows)
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __str__(self):
+        return f"Log containing {len(self)} ascents"
 
 
 class AscentError(Exception):
     """Raise if something goes wrong with an Ascent object."""
 
 
-class AscentLoggingError(Exception):
-    """Raise if something goes wrong when logging an Ascent object."""
+class AscentLogError(Exception):
+    """Raise if something goes wrong with an AscentLog object."""
+
+
+# Open CSV files with the following args, as recommended:
+# https://docs.python.org/3/library/csv.html#csv.reader
+# https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
+
+
+def _open_csvfile(csvfile, mode="r"):
+    return open(csvfile, mode, encoding="utf-8", newline="")
+
+
+# Set dialect to unix when reading/writing CSV files
+# https://docs.python.org/3/library/csv.html#csv.unix_dialect
+
+
+def _csv_reader(csvfile):
+    return csv.reader(csvfile, dialect="unix")
+
+
+def _csv_writer(csvfile):
+    return csv.writer(csvfile, dialect="unix")
