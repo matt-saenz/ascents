@@ -2,7 +2,7 @@
 
 ## Overview
 
-My personal log of rock climbing ascents, powered by a module defining an `Ascent` class and a `log_ascent` command for logging ascents. Ascents are logged in a CSV file with the following fields:
+My personal log of rock climbing ascents, powered by a module defining `Ascent` and `AscentLog` classes and a `log_ascent` command for logging ascents. Ascents are logged in a CSV file with the following fields:
 
 1. `route`: Name of the route.
 2. `grade`: Grade of the route in terms of the Yosemite Decimal System (YDS).
@@ -20,8 +20,8 @@ git clone https://github.com/matt-saenz/ascents.git
 # Move into local clone
 cd ascents/
 
-# Make log_ascent executable
-chmod u+x log_ascent
+# Make log_ascent and drop_ascent executable
+chmod u+x log_ascent drop_ascent
 
 # Add ascents/ directory to $PATH
 vim ~/.bash_profile

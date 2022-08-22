@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+"""Script for dropping an ascent."""
+
+
+import sys
+
+from ascent import AscentLog, AscentLogError
+import utils
+
+
+# Preliminaries
+
+args = sys.argv[1:]
+
+if not args:
+    sys.exit("Usage: drop_ascent csvfile")
+
+csvfile = args[0]
+
+
+# Load log
+
+try:
+    log = AscentLog(csvfile)
+except FileNotFoundError:
+    sys.exit(f"Error: {csvfile} not found")
+
+
+# Find ascent to drop
+
+try:
+    ascent = log.find(*utils.get_route_info())
+except AscentLogError as e:
+    utils.fail("drop", e)
+
+
+# Drop the ascent
+
+print(f"Ascent to be dropped: {ascent.row}")
+
+drop = input(f"Drop the above ascent from {csvfile} (y/n)? ")
+
+while True:
+    if drop == "y":
+        break
+
+    if drop == "n":
+        utils.abort("dropping")
+
+    drop = utils.oops_try_again()
+
+
+log.drop(ascent)
+
+log.write(csvfile)
+
+print("Successfully dropped the above ascent")
