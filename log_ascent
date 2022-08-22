@@ -45,7 +45,7 @@ except FileNotFoundError:
 
     log = AscentLog()
 except AscentLogError as e:
-    sys.exit(f"Failed to log an ascent: {e}")
+    sys.exit(f"Failed to load existing log: {e}")
 
 
 # Get ascent info
