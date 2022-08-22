@@ -135,8 +135,8 @@ class AscentLog:
 
         try:
             i = [row[:3] for row in self.rows].index(route_info)
-        except ValueError:
-            raise AscentLogError(f"No ascent found matching {route_info}")
+        except ValueError as e:
+            raise AscentLogError(f"No ascent found matching {route_info}") from e
 
         date = self.rows[i][3]
 
@@ -149,8 +149,8 @@ class AscentLog:
 
         try:
             self.rows.remove(ascent.row)
-        except ValueError:
-            raise AscentLogError("That ascent does not exist")
+        except ValueError as e:
+            raise AscentLogError("That ascent does not exist") from e
 
     def write(self, csvfile):
         """Write the log to a CSV file."""
