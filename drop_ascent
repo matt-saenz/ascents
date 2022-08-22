@@ -50,10 +50,8 @@ while True:
 
     drop = utils.oops_try_again()
 
-try:
-    log.drop(ascent)
-except AscentLogError as e:
-    utils.fail("drop", e)
+
+log.drop(ascent)
 
 log.write(csvfile)
 
