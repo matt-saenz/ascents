@@ -91,7 +91,7 @@ class AscentLog:
         """
 
         if csvfile is None:
-            self.rows = []
+            self._rows = []
         else:
             with _open_csvfile(csvfile) as f:
                 reader = _csv_reader(f)
@@ -104,23 +104,23 @@ class AscentLog:
                 if header != FIELDS:
                     raise AscentLogError(f"{csvfile} missing proper header row")
 
-                self.rows = [row for row in reader]
+                self._rows = [row for row in reader]
 
     @property
     def crags(self):
         """Crags in the log."""
-        return sorted({row[2] for row in self.rows})
+        return sorted({row[2] for row in self._rows})
 
     def add(self, ascent):
         """Add an ascent to the log after confirming it doesn't already exist."""
 
-        for row in self.rows:
+        for row in self._rows:
             if ascent.row[:3] == row[:3]:
                 raise AscentLogError(
                     f"That ascent was already logged with a date of {row[3]}"
                 )
 
-        self.rows.append(ascent.row)
+        self._rows.append(ascent.row)
 
     def find(self, route, grade, crag):
         """
@@ -134,11 +134,11 @@ class AscentLog:
         route_info = [route, grade, crag]
 
         try:
-            i = [row[:3] for row in self.rows].index(route_info)
+            i = [row[:3] for row in self._rows].index(route_info)
         except ValueError as e:
             raise AscentLogError(f"No ascent found matching {route_info}") from e
 
-        date = self.rows[i][3]
+        date = self._rows[i][3]
 
         ascent = Ascent(*route_info, datetime.date.fromisoformat(date))
 
@@ -148,7 +148,7 @@ class AscentLog:
         """Drop an ascent from the log."""
 
         try:
-            self.rows.remove(ascent.row)
+            self._rows.remove(ascent.row)
         except ValueError as e:
             raise AscentLogError("That ascent does not exist") from e
 
@@ -158,10 +158,10 @@ class AscentLog:
         with _open_csvfile(csvfile, "w") as f:
             writer = _csv_writer(f)
             writer.writerow(FIELDS)
-            writer.writerows(self.rows)
+            writer.writerows(self._rows)
 
     def __len__(self):
-        return len(self.rows)
+        return len(self._rows)
 
     def __str__(self):
         return f"Log containing {len(self)} ascents"
