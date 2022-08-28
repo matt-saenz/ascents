@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Script for dropping an ascent."""
+"""Script for dropping an ascent using the ascent module."""
 
 
 import sys
