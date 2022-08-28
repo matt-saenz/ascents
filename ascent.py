@@ -76,7 +76,9 @@ class AscentLog:
     """
     Log of rock climbing ascents.
 
-    Note that ascents are only logged once.
+    An ascent of a given route may only appear in a log once. Therefore,
+    ascents in a log are unique on route, grade, and crag (referred to
+    collectively as route info).
     """
 
     def __init__(self, csvfile: str | None = None):
@@ -112,10 +114,12 @@ class AscentLog:
         return sorted({row[2] for row in self._rows})
 
     def add(self, ascent):
-        """Add an ascent to the log after confirming it doesn't already exist."""
+        """Add an ascent to the log."""
+
+        route_info = ascent.row[:3]
 
         for row in self._rows:
-            if ascent.row[:3] == row[:3]:
+            if row[:3] == route_info:
                 raise AscentLogError(
                     f"That ascent was already logged with a date of {row[3]}"
                 )
@@ -124,25 +128,22 @@ class AscentLog:
 
     def find(self, route, grade, crag):
         """
-        Find an ascent in the log using the provided info and return it as an
-        Ascent object.
-
-        Note that since ascents are unique on route, grade, and crag, date is
-        not needed.
+        Find an ascent in the log using the provided route info and return it
+        as an Ascent object.
         """
 
         route_info = [route, grade, crag]
 
-        try:
-            i = [row[:3] for row in self._rows].index(route_info)
-        except ValueError as e:
-            raise AscentLogError(f"No ascent found matching {route_info}") from e
+        for row in self._rows:
+            if row[:3] == route_info:
+                break
+        else:
+            # https://docs.python.org/3/tutorial/controlflow.html#break-and-continue-statements-and-else-clauses-on-loops
+            raise AscentLogError(f"No ascent found matching {route_info}")
 
-        date = self._rows[i][3]
+        date = row[3]
 
-        ascent = Ascent(*route_info, datetime.date.fromisoformat(date))
-
-        return ascent
+        return Ascent(*route_info, datetime.date.fromisoformat(date))
 
     def drop(self, ascent):
         """Drop an ascent from the log."""
@@ -165,6 +166,14 @@ class AscentLog:
 
     def __str__(self):
         return f"Log containing {len(self)} ascents"
+
+    # Add these dunder methods for testing
+
+    def __contains__(self, item):
+        return item in self._rows
+
+    def __eq__(self, other):
+        return self._rows == other._rows
 
 
 class AscentError(Exception):
