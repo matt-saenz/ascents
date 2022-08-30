@@ -71,6 +71,12 @@ class Ascent:
     def __str__(self):
         return f"{self.route} {self.grade} at {self.crag} on {self.date.isoformat()}"
 
+    def __eq__(self, other):
+        if not isinstance(other, Ascent):
+            return NotImplemented
+
+        return self.row == other.row
+
 
 class AscentLog:
     """
@@ -167,12 +173,16 @@ class AscentLog:
     def __str__(self):
         return f"Log containing {len(self)} ascents"
 
-    # Add these dunder methods for testing
-
     def __contains__(self, item):
+        if isinstance(item, Ascent):
+            return item.row in self._rows
+
         return item in self._rows
 
     def __eq__(self, other):
+        if not isinstance(other, AscentLog):
+            return NotImplemented
+
         return self._rows == other._rows
 
 

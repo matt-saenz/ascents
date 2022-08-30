@@ -15,14 +15,14 @@ class TestAscentLogMethods(unittest.TestCase):
         self.log.add(self.ascent)
 
     def test_add(self):
-        self.assertIn(self.ascent.row, self.log)
+        self.assertIn(self.ascent, self.log)
 
         with self.assertRaises(AscentLogError):
             self.log.add(self.ascent)
 
     def test_find(self):
         found = self.log.find(*self.ascent.row[:3])
-        self.assertEqual(found.row, self.ascent.row)
+        self.assertEqual(found, self.ascent)
 
         with self.assertRaises(AscentLogError):
             self.log.find("Over Easy", "5.9", "Austin Greenbelt")
