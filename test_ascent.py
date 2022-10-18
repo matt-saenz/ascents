@@ -8,22 +8,30 @@ from ascent import Ascent, AscentError, AscentLog, AscentLogError
 
 
 class TestAscent(unittest.TestCase):
+    def setUp(self):
+        self.ascent = Ascent("Some Route", "5.7", "Some Crag", date(2022, 10, 18))
+
+    def test_row(self):
+        self.assertEqual(
+            self.ascent.row, ["Some Route", "5.7", "Some Crag", "2022-10-18"]
+        )
+
     def test_grade(self):
         bad_grades = ["5.9+", "5.10", "5.11a/b", "5.12-"]
 
         for bad_grade in bad_grades:
             with self.assertRaises(AscentError):
-                Ascent("Some Route", bad_grade, "Some Crag", date.today())
+                self.ascent.grade = bad_grade
 
     def test_date(self):
-        bad_dates = ["2022-10-17", date.today() + timedelta(days=1)]
+        bad_dates = ["2022-10-18", date.today() + timedelta(days=1)]
 
         for bad_date in bad_dates:
             with self.assertRaises(AscentError):
-                Ascent("Some Route", "5.7", "Some Crag", bad_date)
+                self.ascent.date = bad_date
 
 
-class TestAscentLogMethods(unittest.TestCase):
+class TestAscentLog(unittest.TestCase):
     def setUp(self):
         self.log = AscentLog()
         self.log.add(Ascent("Over Easy", "5.9", "Barton Creek Greenbelt", date.today()))
@@ -35,6 +43,16 @@ class TestAscentLogMethods(unittest.TestCase):
 
         with self.assertRaises(AscentLogError):
             self.log.add(self.ascent)
+
+    def test_len(self):
+        self.assertEqual(len(self.log), 2)
+
+    def test_crags(self):
+        self.log.add(
+            Ascent("Some Route", "5.7", "Barton Creek Greenbelt", date.today())
+        )
+
+        self.assertEqual(self.log.crags, ["Barton Creek Greenbelt", "Reimers Ranch"])
 
     def test_find(self):
         found = self.log.find(*self.ascent.row[:3])
