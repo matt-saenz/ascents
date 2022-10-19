@@ -47,7 +47,9 @@ class Ascent:
 
     @grade.setter
     def grade(self, value):
-        if not re.search("^5\.(([0-9])|(1[0-5][a-d]))$", value):
+        valid_yds = re.search("^5\.(([0-9])|(1[0-5][a-d]))$", value)
+
+        if not valid_yds:
             raise AscentError(
                 "grade must be in YDS with no pluses, minuses, or slashes "
                 "(translate as needed)"
@@ -57,7 +59,7 @@ class Ascent:
 
     @property
     def row(self):
-        """Row representation of the ascent (used for logging)."""
+        """Row representation of the ascent."""
         return [self.route, self.grade, self.crag, self.date.isoformat()]
 
     def __repr__(self):
