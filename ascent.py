@@ -47,7 +47,7 @@ class Ascent:
 
     @grade.setter
     def grade(self, value):
-        valid_yds = re.search("^5\.(([0-9])|(1[0-5][a-d]))$", value)
+        valid_yds = re.search(r"^5\.([0-9]|1[0-5][a-d])$", value)
 
         if not valid_yds:
             raise AscentError(
