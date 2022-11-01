@@ -7,6 +7,8 @@ import re
 
 
 FIELDS = ["route", "grade", "crag", "date"]
+INDEX = {field: index for index, field in enumerate(FIELDS)}
+ROUTE_INFO_SLICE = slice(3)
 
 
 class Ascent:
@@ -119,17 +121,17 @@ class AscentLog:
     @property
     def crags(self):
         """Crags in the log."""
-        return sorted({row[2] for row in self._rows})
+        return sorted({row[INDEX["crag"]] for row in self._rows})
 
     def add(self, ascent):
         """Add an ascent to the log."""
 
-        route_info = ascent.row[:3]
+        route_info = ascent.row[ROUTE_INFO_SLICE]
 
         for row in self._rows:
-            if row[:3] == route_info:
+            if row[ROUTE_INFO_SLICE] == route_info:
                 raise AscentLogError(
-                    f"That ascent was already logged with a date of {row[3]}"
+                    f"That ascent was already logged with a date of {row[INDEX['date']]}"
                 )
 
         self._rows.append(ascent.row)
@@ -143,13 +145,13 @@ class AscentLog:
         route_info = [route, grade, crag]
 
         for row in self._rows:
-            if row[:3] == route_info:
+            if row[ROUTE_INFO_SLICE] == route_info:
                 break
         else:
             # https://docs.python.org/3/tutorial/controlflow.html#break-and-continue-statements-and-else-clauses-on-loops
             raise AscentLogError(f"No ascent found matching {route_info}")
 
-        date = row[3]
+        date = row[INDEX["date"]]
 
         return Ascent(*route_info, datetime.date.fromisoformat(date))
 
