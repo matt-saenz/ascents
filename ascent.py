@@ -97,9 +97,9 @@ class AscentLog:
 
         csvfile: Path to existing log CSV file (optional).
 
-        If a csvfile is given, an existing log is loaded from the CSV file.
-        If left None (default), an empty log is created. Log CSV files are
-        created via the AscentLog.write() method.
+        If a CSV file is given, an existing log is loaded from the CSV file.
+        If csvfile is left None (default), an empty log is created. Log CSV
+        files are created via the AscentLog.write() method.
         """
 
         if csvfile is None:
