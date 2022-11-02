@@ -1,6 +1,7 @@
 """Module defining the Ascent and AscentLog classes."""
 
 
+import copy
 import csv
 import datetime
 import re
@@ -117,6 +118,18 @@ class AscentLog:
                     raise AscentLogError(f"{csvfile} missing proper header row")
 
                 self._rows = [row for row in reader]
+
+    @property
+    def rows(self):
+        """
+        Rows in the log.
+
+        This returns a deep copy of rows in the log since rows should not be
+        manipulated directly (only through dedicated methods). The purpose of
+        this property is to provide an easy and safe way to access log rows
+        for viewing and analysis.
+        """
+        return copy.deepcopy(self._rows)
 
     @property
     def crags(self):
