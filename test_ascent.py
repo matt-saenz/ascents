@@ -13,7 +13,8 @@ class TestAscent(unittest.TestCase):
 
     def test_row(self):
         self.assertEqual(
-            self.ascent.row, ["Some Route", "5.7", "Some Crag", "2022-10-18"]
+            self.ascent.row,
+            dict(route="Some Route", grade="5.7", crag="Some Crag", date="2022-10-18"),
         )
 
     def test_grade(self):
@@ -55,7 +56,8 @@ class TestAscentLog(unittest.TestCase):
         self.assertEqual(self.log.crags, ["Barton Creek Greenbelt", "Reimers Ranch"])
 
     def test_find(self):
-        found = self.log.find(*self.ascent.row[:3])
+        row = self.ascent.row
+        found = self.log.find(row["route"], row["grade"], row["crag"])
         self.assertEqual(found, self.ascent)
 
         with self.assertRaises(AscentLogError):

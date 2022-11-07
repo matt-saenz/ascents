@@ -37,7 +37,7 @@ except AscentLogError as e:
 
 # Drop the ascent
 
-print(f"Ascent to be dropped: {ascent.row}")
+print(f"Ascent to be dropped: {ascent}")
 
 drop = input(f"Drop the above ascent from {csvfile} (y/n)? ")
 

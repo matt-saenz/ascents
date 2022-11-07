@@ -126,4 +126,4 @@ except AscentLogError as e:
 
 log.write(csvfile)
 
-print(f"Successfully logged ascent: {ascent.row}")
+print("Successfully logged the above ascent")
