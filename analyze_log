@@ -8,7 +8,7 @@ from datetime import datetime
 import re
 import sys
 
-from ascent import AscentLog, INDEX
+from ascent import AscentLog
 
 
 args = sys.argv[1:]
@@ -43,11 +43,11 @@ def count(values, sort_key=None):
 
 
 # Counts by year
-years = [int(row[INDEX["date"]][:4]) for row in rows]
+years = [int(row["date"][:4]) for row in rows]
 print(f"Count of ascents by year:\n{count(years)}\n")
 
 # Counts by crag
-crags = [row[INDEX["crag"]] for row in rows]
+crags = [row["crag"] for row in rows]
 print(f"Count of ascents by crag:\n{count(crags)}\n")
 
 
@@ -57,7 +57,7 @@ def grade_key(grade):
     return int(match[1]), match[2]
 
 
-grades = [row[INDEX["grade"]] for row in rows]
+grades = [row["grade"] for row in rows]
 
 print(
     "Count of ascents by grade:",

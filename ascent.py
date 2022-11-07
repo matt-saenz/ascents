@@ -7,11 +7,6 @@ import datetime
 import re
 
 
-FIELDS = ["route", "grade", "crag", "date"]
-INDEX = {field: index for index, field in enumerate(FIELDS)}
-ROUTE_INFO_SLICE = slice(3)
-
-
 class Ascent:
     """An Ascent object represents a rock climbing ascent."""
 
@@ -61,9 +56,17 @@ class Ascent:
         self._grade = value
 
     @property
-    def row(self):
+    def row(self) -> dict:
         """Row representation of the ascent."""
-        return [self.route, self.grade, self.crag, self.date.isoformat()]
+
+        row = dict(
+            route=self.route,
+            grade=self.grade,
+            crag=self.crag,
+            date=self.date.isoformat(),
+        )
+
+        return row
 
     def __repr__(self):
         repr_string = (
@@ -92,6 +95,8 @@ class AscentLog:
     collectively as route info).
     """
 
+    FIELDNAMES = ["route", "grade", "crag", "date"]
+
     def __init__(self, csvfile: str | None = None):
         """
         Create a new AscentLog object.
@@ -109,18 +114,13 @@ class AscentLog:
             with _open_csvfile(csvfile) as f:
                 reader = _csv_reader(f)
 
-                try:
-                    header = next(reader)
-                except StopIteration as e:
-                    raise AscentLogError(f"{csvfile} found but empty") from e
-
-                if header != FIELDS:
+                if reader.fieldnames != self.FIELDNAMES:
                     raise AscentLogError(f"{csvfile} missing proper header row")
 
                 self._rows = [row for row in reader]
 
     @property
-    def rows(self):
+    def rows(self) -> list[dict]:
         """
         Rows in the log.
 
@@ -132,43 +132,41 @@ class AscentLog:
         return copy.deepcopy(self._rows)
 
     @property
-    def crags(self):
+    def crags(self) -> list:
         """Crags in the log."""
-        return sorted({row[INDEX["crag"]] for row in self._rows})
+        return sorted({row["crag"] for row in self._rows})
 
-    def add(self, ascent):
+    def add(self, ascent: Ascent) -> None:
         """Add an ascent to the log."""
 
-        route_info = ascent.row[ROUTE_INFO_SLICE]
+        route_info = _get_route_info(ascent.row)
 
         for row in self._rows:
-            if row[ROUTE_INFO_SLICE] == route_info:
+            if _get_route_info(row) == route_info:
                 raise AscentLogError(
-                    f"That ascent was already logged with a date of {row[INDEX['date']]}"
+                    f"That ascent was already logged with a date of {row['date']}"
                 )
 
         self._rows.append(ascent.row)
 
-    def find(self, route, grade, crag):
+    def find(self, route: str, grade: str, crag: str) -> Ascent:
         """
         Find an ascent in the log using the provided route info and return it
         as an Ascent object.
         """
 
-        route_info = [route, grade, crag]
+        route_info = dict(route=route, grade=grade, crag=crag)
 
         for row in self._rows:
-            if row[ROUTE_INFO_SLICE] == route_info:
+            if _get_route_info(row) == route_info:
                 break
         else:
             # https://docs.python.org/3/tutorial/controlflow.html#break-and-continue-statements-and-else-clauses-on-loops
-            raise AscentLogError(f"No ascent found matching {route_info}")
+            raise AscentLogError("No ascent found matching provided route info")
 
-        date = row[INDEX["date"]]
+        return Ascent(route, grade, crag, datetime.date.fromisoformat(row["date"]))
 
-        return Ascent(*route_info, datetime.date.fromisoformat(date))
-
-    def drop(self, ascent):
+    def drop(self, ascent: Ascent) -> None:
         """Drop an ascent from the log."""
 
         try:
@@ -176,12 +174,12 @@ class AscentLog:
         except ValueError as e:
             raise AscentLogError("That ascent does not exist") from e
 
-    def write(self, csvfile):
+    def write(self, csvfile: str) -> None:
         """Write the log to a CSV file."""
 
         with _open_csvfile(csvfile, "w") as f:
-            writer = _csv_writer(f)
-            writer.writerow(FIELDS)
+            writer = _csv_writer(f, fieldnames=self.FIELDNAMES)
+            writer.writeheader()
             writer.writerows(self._rows)
 
     def __len__(self):
@@ -225,8 +223,12 @@ def _open_csvfile(csvfile, mode="r"):
 
 
 def _csv_reader(csvfile):
-    return csv.reader(csvfile, dialect="unix")
+    return csv.DictReader(csvfile, dialect="unix")
 
 
-def _csv_writer(csvfile):
-    return csv.writer(csvfile, dialect="unix")
+def _csv_writer(csvfile, fieldnames):
+    return csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
+
+
+def _get_route_info(row):
+    return {key: row[key] for key in ["route", "grade", "crag"]}
