@@ -2,7 +2,7 @@
 
 ## Overview
 
-My personal log of rock climbing ascents, powered by a module defining `Ascent` and `AscentLog` classes and a `log_ascent` command for logging ascents. Ascents are logged in a CSV file with the following fields:
+My personal log of rock climbing ascents, powered by a [module](ascent.py) defining `Ascent` and `AscentLog` classes and a [`log_ascent`](log_ascent) command for logging ascents. Ascents are logged in a [CSV file](ascents.csv) with the following fields:
 
 1. `route`: Name of the route.
 2. `grade`: Grade of the route in terms of the Yosemite Decimal System (YDS).
