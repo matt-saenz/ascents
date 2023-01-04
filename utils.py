@@ -21,5 +21,13 @@ def get_route_info():
     return route, grade, crag
 
 
-def oops_try_again():
-    return input("Oops! Valid inputs are 'y' or 'n'. Please try again: ")
+def get_y_n(message):
+    resp = input(message)
+
+    while True:
+        if resp in {"y", "n"}:
+            break
+
+        resp = input("Oops! Valid inputs are 'y' or 'n'. Please try again: ")
+
+    return resp

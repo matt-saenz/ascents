@@ -31,17 +31,11 @@ csvfile = args[0]
 try:
     log = AscentLog(csvfile)
 except FileNotFoundError:
-    create = input(f"{csvfile} not found, create new file (y/n)? ")
+    create = utils.get_y_n(f"{csvfile} not found, create new file (y/n)? ")
 
-    while True:
-        if create == "y":
-            break
-
-        if create == "n":
-            print("Aborted logging an ascent")
-            sys.exit(0)
-
-        create = utils.oops_try_again()
+    if create == "n":
+        print("Aborted logging an ascent")
+        sys.exit(0)
 
     log = AscentLog()
 except AscentLogError as e:
@@ -92,32 +86,20 @@ if ascent.crag not in known_crags:
     if known_crags:
         print("Known crags currently include:", "\n".join(known_crags), sep="\n")
 
-    cont = input("Continue logging the above ascent (y/n)? ")
+    cont = utils.get_y_n("Continue logging the above ascent (y/n)? ")
 
-    while True:
-        if cont == "y":
-            break
-
-        if cont == "n":
-            utils.abort("logging")
-
-        cont = utils.oops_try_again()
+    if cont == "n":
+        utils.abort("logging")
 
 
 # Log the ascent
 
 print(f"Ascent to be logged: {ascent}")
 
-log_ascent = input(f"Log the above ascent in {csvfile} (y/n)? ")
+log_ascent = utils.get_y_n(f"Log the above ascent in {csvfile} (y/n)? ")
 
-while True:
-    if log_ascent == "y":
-        break
-
-    if log_ascent == "n":
-        utils.abort("logging")
-
-    log_ascent = utils.oops_try_again()
+if log_ascent == "n":
+    utils.abort("logging")
 
 try:
     log.add(ascent)

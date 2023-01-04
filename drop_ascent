@@ -39,17 +39,10 @@ except AscentLogError as e:
 
 print(f"Ascent to be dropped: {ascent}")
 
-drop = input(f"Drop the above ascent from {csvfile} (y/n)? ")
+drop = utils.get_y_n(f"Drop the above ascent from {csvfile} (y/n)? ")
 
-while True:
-    if drop == "y":
-        break
-
-    if drop == "n":
-        utils.abort("dropping")
-
-    drop = utils.oops_try_again()
-
+if drop == "n":
+    utils.abort("dropping")
 
 log.drop(ascent)
 
