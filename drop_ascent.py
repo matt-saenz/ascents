@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Script for dropping an ascent using the ascent module."""
 
 
@@ -11,10 +9,11 @@ import utils
 
 # Preliminaries
 
+script = sys.argv[0]
 args = sys.argv[1:]
 
 if not args:
-    sys.exit("Usage: drop_ascent csvfile")
+    sys.exit(f"Usage: {script} csvfile")
 
 csvfile = args[0]
 

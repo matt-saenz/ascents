@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Script for logging an ascent using the ascent module."""
 
 
@@ -12,9 +10,10 @@ import utils
 
 # Preliminaries
 
+script = sys.argv[0]
 args = sys.argv[1:]
 
-usage = "Usage: log_ascent [--help] csvfile"
+usage = f"Usage: {script} [--help] csvfile"
 
 if not args:
     sys.exit(usage)

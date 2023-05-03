@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Script for running a basic log analysis."""
 
 
@@ -11,10 +9,11 @@ import sys
 from ascent import AscentLog
 
 
+script = sys.argv[0]
 args = sys.argv[1:]
 
 if not args:
-    sys.exit("Usage: analyze_log csvfile")
+    sys.exit(f"Usage: {script} csvfile")
 
 csvfile = args[0]
 
