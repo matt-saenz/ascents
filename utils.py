@@ -1,4 +1,4 @@
-"""Module with helpers for commands."""
+"""Module with helpers for scripts."""
 
 
 import sys
