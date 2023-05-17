@@ -2,29 +2,44 @@
 
 ## Overview
 
-[Script](log_ascent.py) for logging rock climbing ascents powered by a [module](ascent.py) defining `Ascent` and `AscentLog` classes. Ascents are logged in a CSV file with the following fields:
+[Script](log_ascent) for logging rock climbing ascents powered by a [module](ascent.py) defining `Route`, `Ascent`, and `AscentDB` classes. Ascents are logged in a SQLite database table with the following fields:
 
 1. `route`: Name of the route.
 2. `grade`: Grade of the route in terms of the Yosemite Decimal System (YDS).
 3. `crag`: Name of the crag, or general climbing area, where the route is located.
 4. `date`: Date of first recorded ascent.
 
+An ascent is defined as a redpoint ascent (i.e., successfully leading the route with no falls or takes).
+
 ## Example Usage
 
+(Note that these scripts have been symlinked to in `~/bin`, which is on my path.)
+
+Initialize ascent database:
+
 ```
-$ python log_ascent.py my_ascents.csv
+$ init_ascent_db ascent.db
+```
+
+Log an ascent:
+
+```
+$ log_ascent ascent.db
 Enter the name of the route: Slither
 Enter the grade of the route: 5.7
 Enter the name of the crag where the route is located: Reimers Ranch
-Enter the date of the ascent in YYYY-MM-DD format (or 't' for today or 'y' for yesterday): t
-Ascent to be logged: Slither 5.7 at Reimers Ranch on 2023-05-03
-Log the above ascent in my_ascents.csv (y/n)? y
+Enter the date of the ascent in YYYY-MM-DD format (or 't' for today or 'y' for yesterday): 2022-06-27
+Ascent to be logged: Slither 5.7 at Reimers Ranch on 2022-06-27
+Log the above ascent in ascent.db (y/n)? y
 Successfully logged the above ascent
 ```
 
+Confirm its existence:
+
 ```
-$ cat my_ascents.csv
-"route","grade","crag","date"
-"Lessa the Puramatic 6000 Kitty","5.5","Reimers Ranch","2023-05-03"
-"Slither","5.7","Reimers Ranch","2023-05-03"
+$ sqlite3 -markdown ascent.db 'select * from ascents'
 ```
+
+|  route  | grade |     crag      |    date    |
+|---------|-------|---------------|------------|
+| Slither | 5.7   | Reimers Ranch | 2022-06-27 |
