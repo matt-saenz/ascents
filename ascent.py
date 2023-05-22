@@ -1,28 +1,45 @@
-"""Module defining the Ascent and AscentLog classes."""
+"""Module defining Route, Ascent, and AscentDB classes."""
 
 
-import copy
-import csv
 import datetime
 import re
+import sqlite3
+from pathlib import Path
+
+
+class Route:
+    """A rock climbing route."""
+
+    def __init__(self, name: str, grade: str, crag: str):
+        self.name = name
+        self.grade = grade
+        self.crag = crag
+
+    @property
+    def grade(self):
+        return self._grade
+
+    @grade.setter
+    def grade(self, value):
+        valid_yds = re.search(r"^5\.([0-9]|1[0-5][a-d])$", value)
+
+        if valid_yds is None:
+            raise RouteError(
+                "grade must be in YDS with no pluses, minuses, or slashes "
+                "(translate as needed)"
+            )
+
+        self._grade = value
+
+    def __str__(self):
+        return f"{self.name} {self.grade} at {self.crag}"
 
 
 class Ascent:
-    """An Ascent object represents a rock climbing ascent."""
+    """A rock climbing ascent."""
 
-    def __init__(self, route: str, grade: str, crag: str, date: datetime.date):
-        """
-        Create a new Ascent object.
-
-        route: Name of the route.
-        grade: Grade of the route in YDS.
-        crag: Name of the crag where the route is located.
-        date: Date of the ascent.
-        """
-
+    def __init__(self, route: Route, date: datetime.date):
         self.route = route
-        self.grade = grade
-        self.crag = crag
         self.date = date
 
     @property
@@ -39,196 +56,131 @@ class Ascent:
 
         self._date = value
 
-    @property
-    def grade(self):
-        return self._grade
+    def __str__(self):
+        return f"{self.route} on {self.date}"
 
-    @grade.setter
-    def grade(self, value):
-        valid_yds = re.search(r"^5\.([0-9]|1[0-5][a-d])$", value)
 
-        if not valid_yds:
-            raise AscentError(
-                "grade must be in YDS with no pluses, minuses, or slashes "
-                "(translate as needed)"
+class AscentDB:
+    """An ascent database."""
+
+    def __init__(self, database: Path):
+        if not database.exists():
+            raise AscentDBError(
+                f"{database} not found, must be an already initialized ascent database"
             )
 
-        self._grade = value
+        self._database = database
 
-    @property
-    def row(self) -> dict:
-        """Row representation of the ascent."""
+    def __enter__(self):
+        self._connection = sqlite3.connect(self._database)
+        self._cursor = self._connection.cursor()
+        return self
 
-        row = dict(
-            route=self.route,
-            grade=self.grade,
-            crag=self.crag,
-            date=self.date.isoformat(),
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._connection.close()
+
+    def crags(self) -> list[str]:
+        crags = []
+
+        self._cursor.execute(
+            """
+            SELECT DISTINCT crag
+            FROM ascents
+            ORDER BY crag
+            """
         )
 
-        return row
+        for row in self._cursor:
+            crags.append(row[0])
 
-    def __repr__(self):
-        repr_string = (
-            f"{self.__class__.__qualname__}"
-            f'("{self.route}", "{self.grade}", "{self.crag}", {repr(self.date)})'
+        return crags
+
+    def log_ascent(self, ascent: Ascent) -> None:
+        self._cursor.execute(
+            """
+            SELECT date
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            """,
+            (ascent.route.name, ascent.route.grade, ascent.route.crag),
         )
 
-        return repr_string
+        row = self._cursor.fetchone()
 
-    def __str__(self):
-        return f"{self.route} {self.grade} at {self.crag} on {self.date.isoformat()}"
+        if row is not None:
+            raise AscentDBError(
+                f"That ascent was already logged with a date of {row[0]}"
+            )
 
-    def __eq__(self, other):
-        if not isinstance(other, Ascent):
-            return NotImplemented
+        self._cursor.execute(
+            """
+            INSERT INTO ascents(route, grade, crag, date)
+            VALUES(?, ?, ?, ?)
+            """,
+            (ascent.route.name, ascent.route.grade, ascent.route.crag, ascent.date),
+        )
 
-        return self.row == other.row
+        self._connection.commit()
+
+    def total_count(self) -> int:
+        self._cursor.execute(
+            """
+            SELECT count(*)
+            FROM ascents
+            """
+        )
+
+        return self._cursor.fetchone()[0]
+
+    def year_counts(self) -> list[tuple[int, int]]:
+        self._cursor.execute(
+            """
+            SELECT CAST(strftime('%Y', date) AS INTEGER) AS year, count(*)
+            FROM ascents
+            GROUP BY year
+            ORDER BY year
+            """
+        )
+
+        return self._cursor.fetchall()
+
+    def crag_counts(self) -> list[tuple[str, int]]:
+        self._cursor.execute(
+            """
+            SELECT crag, count(*)
+            FROM ascents
+            GROUP BY crag
+            ORDER BY crag
+            """
+        )
+
+        return self._cursor.fetchall()
+
+    def grade_counts(self) -> list[tuple[str, int]]:
+        self._cursor.execute(
+            """
+            SELECT grade_counts.grade, grade_counts.count
+            FROM (
+                SELECT grade, count(*) AS count
+                FROM ascents
+                GROUP BY grade
+                ORDER BY grade
+            ) AS grade_counts
+            LEFT JOIN grade_info USING(grade)
+            ORDER BY grade_info.grade_number, grade_info.grade_letter
+            """
+        )
+
+        return self._cursor.fetchall()
 
 
-class AscentLog:
-    """
-    Log of rock climbing ascents.
-
-    An ascent of a given route may only appear in a log once. Therefore,
-    ascents in a log are unique on route, grade, and crag (referred to
-    collectively as route info).
-    """
-
-    FIELDNAMES = ["route", "grade", "crag", "date"]
-
-    def __init__(self, csvfile: str | None = None):
-        """
-        Create a new AscentLog object.
-
-        csvfile: Path to existing log CSV file (optional).
-
-        If a CSV file is given, an existing log is loaded from the CSV file.
-        If csvfile is left None (default), an empty log is created. Log CSV
-        files are created via the AscentLog.write() method.
-        """
-
-        if csvfile is None:
-            self._rows = []
-        else:
-            with _open_csvfile(csvfile) as f:
-                reader = _csv_reader(f)
-
-                if reader.fieldnames != self.FIELDNAMES:
-                    raise AscentLogError(f"{csvfile} missing proper header row")
-
-                self._rows = [row for row in reader]
-
-    @property
-    def rows(self) -> list[dict]:
-        """
-        Rows in the log.
-
-        This returns a deep copy of rows in the log since rows should not be
-        manipulated directly (only through dedicated methods). The purpose of
-        this property is to provide an easy and safe way to access log rows
-        for viewing and analysis.
-        """
-        return copy.deepcopy(self._rows)
-
-    @property
-    def crags(self) -> list:
-        """Crags in the log."""
-        return sorted({row["crag"] for row in self._rows})
-
-    def add(self, ascent: Ascent) -> None:
-        """Add an ascent to the log."""
-
-        route_info = _get_route_info(ascent.row)
-
-        for row in self._rows:
-            if _get_route_info(row) == route_info:
-                raise AscentLogError(
-                    f"That ascent was already logged with a date of {row['date']}"
-                )
-
-        self._rows.append(ascent.row)
-
-    def find(self, route: str, grade: str, crag: str) -> Ascent:
-        """
-        Find an ascent in the log using the provided route info and return it
-        as an Ascent object.
-        """
-
-        route_info = dict(route=route, grade=grade, crag=crag)
-
-        for row in self._rows:
-            if _get_route_info(row) == route_info:
-                break
-        else:
-            # https://docs.python.org/3/tutorial/controlflow.html#break-and-continue-statements-and-else-clauses-on-loops
-            raise AscentLogError("No ascent found matching provided route info")
-
-        return Ascent(route, grade, crag, datetime.date.fromisoformat(row["date"]))
-
-    def drop(self, ascent: Ascent) -> None:
-        """Drop an ascent from the log."""
-
-        try:
-            self._rows.remove(ascent.row)
-        except ValueError as e:
-            raise AscentLogError("That ascent does not exist") from e
-
-    def write(self, csvfile: str) -> None:
-        """Write the log to a CSV file."""
-
-        with _open_csvfile(csvfile, "w") as f:
-            writer = _csv_writer(f, fieldnames=self.FIELDNAMES)
-            writer.writeheader()
-            writer.writerows(self._rows)
-
-    def __len__(self):
-        return len(self._rows)
-
-    def __str__(self):
-        return f"Log containing {len(self)} ascents"
-
-    def __contains__(self, item):
-        if isinstance(item, Ascent):
-            return item.row in self._rows
-
-        return item in self._rows
-
-    def __eq__(self, other):
-        if not isinstance(other, AscentLog):
-            return NotImplemented
-
-        return self._rows == other._rows
+class RouteError(Exception):
+    """Raise if something goes wrong with a Route object."""
 
 
 class AscentError(Exception):
     """Raise if something goes wrong with an Ascent object."""
 
 
-class AscentLogError(Exception):
-    """Raise if something goes wrong with an AscentLog object."""
-
-
-# Open CSV files with the following args, as recommended:
-# https://docs.python.org/3/library/csv.html#csv.reader
-# https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
-
-
-def _open_csvfile(csvfile, mode="r"):
-    return open(csvfile, mode, encoding="utf-8", newline="")
-
-
-# Set dialect to unix when reading/writing CSV files
-# https://docs.python.org/3/library/csv.html#csv.unix_dialect
-
-
-def _csv_reader(csvfile):
-    return csv.DictReader(csvfile, dialect="unix")
-
-
-def _csv_writer(csvfile, fieldnames):
-    return csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
-
-
-def _get_route_info(row):
-    return {key: row[key] for key in ["route", "grade", "crag"]}
+class AscentDBError(Exception):
+    """Raise if something goes wrong with an AscentDB object."""
