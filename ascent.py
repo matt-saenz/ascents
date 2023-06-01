@@ -164,7 +164,6 @@ class AscentDB:
                 SELECT grade, count(*) AS count
                 FROM ascents
                 GROUP BY grade
-                ORDER BY grade
             ) AS grade_counts
             LEFT JOIN grade_info USING(grade)
             ORDER BY grade_info.grade_number, grade_info.grade_letter
