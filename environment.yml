@@ -1,0 +1,8 @@
+name: ascents
+dependencies:
+  - python>=3.11.3,<4.0.0
+  - sqlite>=3.41.2,<4.0.0
+  # dev
+  - black
+  - mypy
+  - pytest
