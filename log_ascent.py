@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Script for logging an ascent."""
 
 

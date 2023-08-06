@@ -2,7 +2,7 @@
 
 ## Overview
 
-[Script](log_ascent) for logging rock climbing ascents powered by a [module](ascent.py) defining `Route`, `Ascent`, and `AscentDB` classes. Ascents are logged in a SQLite database table with the following fields:
+[Script](log_ascent.py) for logging rock climbing ascents powered by a [module](ascent.py) defining `Route`, `Ascent`, and `AscentDB` classes. Ascents are logged in a SQLite database table with the following fields:
 
 1. `route`: Name of the route.
 2. `grade`: Grade of the route in terms of the Yosemite Decimal System (YDS).
@@ -13,7 +13,7 @@ An ascent is defined as a redpoint ascent (i.e., successfully leading the route 
 
 ## Example Usage
 
-(Note that these scripts have been symlinked to in `~/bin`, which is on my path.)
+(Note that these scripts have been aliased for convenience.)
 
 Initialize ascent database:
 

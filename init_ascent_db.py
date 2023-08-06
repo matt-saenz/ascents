@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Script for initializing ascent database."""
 
 
