@@ -37,7 +37,7 @@ Successfully logged the above ascent
 Confirm its existence:
 
 ```
-$ sqlite3 -markdown ascent.db 'select * from ascents'
+$ sqlite3 --markdown ascent.db 'select * from ascents'
 ```
 
 |  route  | grade |     crag      |    date    |
