@@ -73,9 +73,9 @@ if known_crags and ascent.route.crag not in known_crags:
 
     print("Known crags currently include:", "\n".join(known_crags), sep="\n")
 
-    cont = utils.get_y_n("Continue logging the above ascent (y/n)? ")
+    cont = utils.confirm("Continue logging the above ascent")
 
-    if cont == "n":
+    if not cont:
         utils.abort()
 
 
@@ -83,9 +83,9 @@ if known_crags and ascent.route.crag not in known_crags:
 
 print(f"Ascent to be logged: {ascent}")
 
-log_ascent = utils.get_y_n(f"Log the above ascent in {args.database} (y/n)? ")
+log_ascent = utils.confirm(f"Log the above ascent in {args.database}")
 
-if log_ascent == "n":
+if not log_ascent:
     utils.abort()
 
 try:

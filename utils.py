@@ -1,4 +1,4 @@
-"""Utilities for log_ascent script."""
+"""Utilities for log_ascent.py script."""
 
 
 import sys
@@ -13,8 +13,8 @@ def fail(why):
     sys.exit(f"Failed to log the above ascent: {why}")
 
 
-def get_y_n(message):
-    resp = input(message)
+def confirm(message: str) -> bool:
+    resp = input(message + " (y/n)? ")
 
     while True:
         if resp in {"y", "n"}:
@@ -22,4 +22,4 @@ def get_y_n(message):
 
         resp = input("Oops! Valid inputs are 'y' or 'n'. Please try again: ")
 
-    return resp
+    return resp == "y"
