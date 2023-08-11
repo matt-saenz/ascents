@@ -5,22 +5,23 @@ import datetime
 import re
 import sqlite3
 from pathlib import Path
+from typing import Self
 
 
 class Route:
     """A rock climbing route."""
 
-    def __init__(self, name: str, grade: str, crag: str):
+    def __init__(self, name: str, grade: str, crag: str) -> None:
         self.name = name
         self.grade = grade
         self.crag = crag
 
     @property
-    def grade(self):
+    def grade(self) -> str:
         return self._grade
 
     @grade.setter
-    def grade(self, value):
+    def grade(self, value: str) -> None:
         valid_yds = re.search(r"^5\.([0-9]|1[0-5][a-d])$", value)
 
         if valid_yds is None:
@@ -31,23 +32,23 @@ class Route:
 
         self._grade = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} {self.grade} at {self.crag}"
 
 
 class Ascent:
     """A rock climbing ascent."""
 
-    def __init__(self, route: Route, date: datetime.date):
+    def __init__(self, route: Route, date: datetime.date) -> None:
         self.route = route
         self.date = date
 
     @property
-    def date(self):
+    def date(self) -> datetime.date:
         return self._date
 
     @date.setter
-    def date(self, value):
+    def date(self, value: datetime.date) -> None:
         if not isinstance(value, datetime.date):
             raise AscentError("date must be a datetime.date object")
 
@@ -56,14 +57,14 @@ class Ascent:
 
         self._date = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.route} on {self.date}"
 
 
 class AscentDB:
     """An ascent database."""
 
-    def __init__(self, database: Path):
+    def __init__(self, database: Path) -> None:
         if not database.exists():
             raise AscentDBError(
                 f"{database} not found, must be an already initialized ascent database"
@@ -71,12 +72,12 @@ class AscentDB:
 
         self._database = database
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self._connection = sqlite3.connect(self._database)
         self._cursor = self._connection.cursor()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         self._connection.close()
 
     def crags(self) -> list[str]:
@@ -130,7 +131,9 @@ class AscentDB:
             """
         )
 
-        return self._cursor.fetchone()[0]
+        total_count: int = self._cursor.fetchone()[0]
+
+        return total_count
 
     def year_counts(self) -> list[tuple[int, int]]:
         self._cursor.execute(

@@ -2,5 +2,5 @@
 set -e
 
 black --check --diff *.py
-mypy ascent.py utils.py test_ascent.py
+mypy --strict ascent.py utils.py
 pytest --quiet test_ascent.py

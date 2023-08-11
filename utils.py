@@ -2,14 +2,15 @@
 
 
 import sys
+from typing import Any
 
 
-def abort():
+def abort() -> None:
     print("Aborted logging the above ascent")
     sys.exit(0)
 
 
-def fail(why):
+def fail(why: Any) -> None:
     sys.exit(f"Failed to log the above ascent: {why}")
 
 
