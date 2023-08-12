@@ -4,36 +4,39 @@
 import datetime
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from ascent import (
     Ascent,
-    AscentError,
     AscentDB,
     AscentDBError,
+    AscentError,
     Route,
     RouteError,
 )
 
+AscentData = list[tuple[str, str, str, datetime.date]]
+
 
 @pytest.fixture
-def route():
+def route() -> Route:
     return Route("Some Route", "5.7", "Some Crag")
 
 
 class TestRoute:
     @pytest.mark.parametrize("bad_grade", ["5.9+", "5.10", "5.11a/b", "5.12-"])
-    def test_grade(self, route, bad_grade):
+    def test_grade(self, route: Route, bad_grade: str) -> None:
         with pytest.raises(RouteError):
             route.grade = bad_grade
 
-    def test_str(self, route):
+    def test_str(self, route: Route) -> None:
         assert str(route) == "Some Route 5.7 at Some Crag"
 
 
 @pytest.fixture
-def ascent(route):
+def ascent(route: Route) -> Ascent:
     return Ascent(route, datetime.date(2023, 1, 1))
 
 
@@ -42,16 +45,16 @@ class TestAscent:
         "bad_date",
         ["2022-10-18", datetime.date.today() + datetime.timedelta(days=1)],
     )
-    def test_date(self, ascent, bad_date):
+    def test_date(self, ascent: Ascent, bad_date: Any) -> None:
         with pytest.raises(AscentError):
             ascent.date = bad_date
 
-    def test_str(self, ascent):
+    def test_str(self, ascent: Ascent) -> None:
         assert str(ascent) == "Some Route 5.7 at Some Crag on 2023-01-01"
 
 
 @pytest.fixture(scope="module")
-def ascent_data():
+def ascent_data() -> AscentData:
     date_2022 = datetime.date(2022, 12, 1)
     date_2023 = datetime.date(2023, 1, 1)
 
@@ -68,7 +71,7 @@ def ascent_data():
 
 
 @pytest.fixture(scope="module")
-def db(ascent_data):
+def db(ascent_data: AscentData) -> AscentDB:
     test_db = Path("test.db")
 
     if not test_db.exists():
@@ -91,7 +94,10 @@ def db(ascent_data):
 
 
 class TestAscentDB:
-    def test_crags(self, db):
+    def test_name(self, db: AscentDB) -> None:
+        assert db.name == "test.db"
+
+    def test_crags(self, db: AscentDB) -> None:
         with db:
             crags = db.crags()
 
@@ -102,19 +108,19 @@ class TestAscentDB:
             "Some Crag",
         ]
 
-    def test_log_ascent(self, db, ascent_data):
+    def test_log_ascent(self, db: AscentDB, ascent_data: AscentData) -> None:
         with db:
             for name, grade, crag, date in ascent_data:
                 with pytest.raises(AscentDBError):
                     db.log_ascent(Ascent(Route(name, grade, crag), date))
 
-    def test_total_count(self, db):
+    def test_total_count(self, db: AscentDB) -> None:
         with db:
             total_count = db.total_count()
 
         assert total_count == 8
 
-    def test_year_counts(self, db):
+    def test_year_counts(self, db: AscentDB) -> None:
         with db:
             year_counts = db.year_counts()
 
@@ -123,7 +129,7 @@ class TestAscentDB:
             (2023, 4),
         ]
 
-    def test_crag_counts(self, db):
+    def test_crag_counts(self, db: AscentDB) -> None:
         with db:
             crag_counts = db.crag_counts()
 
@@ -134,7 +140,7 @@ class TestAscentDB:
             ("Some Crag", 4),
         ]
 
-    def test_grade_counts(self, db):
+    def test_grade_counts(self, db: AscentDB) -> None:
         with db:
             grade_counts = db.grade_counts()
 

@@ -6,61 +6,75 @@ import sqlite3
 import sys
 from pathlib import Path
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("database", type=Path)
-args = parser.parse_args()
+GradeInfoData = list[tuple[str, int, str | None]]
 
 
-if args.database.exists():
-    sys.exit(f"Error: {args.database} already exists")
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("database", type=Path)
+    args = parser.parse_args()
+    return args
 
 
-# Generate data for grade info table
+def generate_grade_info_data() -> GradeInfoData:
+    grade_info_data: GradeInfoData = []
 
-grades = []
+    for number in range(16):
+        if number < 10:
+            grade_info_data.append((f"5.{number}", number, None))
+        else:
+            for letter in "abcd":
+                grade_info_data.append((f"5.{number}{letter}", number, letter))
 
-for number in range(16):
-    if number < 10:
-        grades.append((f"5.{number}", number, None))
-    else:
-        for letter in "abcd":
-            grades.append((f"5.{number}{letter}", number, letter))
+    return grade_info_data
 
 
-# Create tables
+def init_ascent_db(database: Path) -> None:
+    if database.exists():
+        sys.exit(f"Error: {database} already exists")
 
-connection = sqlite3.connect(args.database)
+    grade_info_data = generate_grade_info_data()
 
-try:
-    cursor = connection.cursor()
+    connection = sqlite3.connect(database)
 
-    cursor.executescript(
-        """
-        CREATE TABLE ascents(
-            route TEXT NOT NULL,
-            grade TEXT NOT NULL,
-            crag TEXT NOT NULL,
-            date TEXT NOT NULL,
-            PRIMARY KEY(route, grade, crag)
-        );
+    try:
+        cursor = connection.cursor()
 
-        CREATE TABLE grade_info(
-            grade TEXT PRIMARY KEY,
-            grade_number INTEGER NOT NULL,
-            grade_letter TEXT
-        );
-        """
-    )
+        cursor.executescript(
+            """
+            CREATE TABLE ascents(
+                route TEXT NOT NULL,
+                grade TEXT NOT NULL,
+                crag TEXT NOT NULL,
+                date TEXT NOT NULL,
+                PRIMARY KEY(route, grade, crag)
+            );
 
-    cursor.executemany(
-        """
-        INSERT INTO grade_info
-        VALUES(?, ?, ?)
-        """,
-        grades,
-    )
+            CREATE TABLE grade_info(
+                grade TEXT PRIMARY KEY,
+                grade_number INTEGER NOT NULL,
+                grade_letter TEXT
+            );
+            """
+        )
 
-    connection.commit()
-finally:
-    connection.close()
+        cursor.executemany(
+            """
+            INSERT INTO grade_info
+            VALUES(?, ?, ?)
+            """,
+            grade_info_data,
+        )
+
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def main() -> None:
+    args = get_args()
+    init_ascent_db(args.database)
+
+
+if __name__ == "__main__":
+    main()

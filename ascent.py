@@ -9,8 +9,6 @@ from typing import Self
 
 
 class Route:
-    """A rock climbing route."""
-
     def __init__(self, name: str, grade: str, crag: str) -> None:
         self.name = name
         self.grade = grade
@@ -37,8 +35,6 @@ class Route:
 
 
 class Ascent:
-    """A rock climbing ascent."""
-
     def __init__(self, route: Route, date: datetime.date) -> None:
         self.route = route
         self.date = date
@@ -62,8 +58,6 @@ class Ascent:
 
 
 class AscentDB:
-    """An ascent database."""
-
     def __init__(self, database: Path) -> None:
         if not database.exists():
             raise AscentDBError(
@@ -79,6 +73,10 @@ class AscentDB:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
         self._connection.close()
+
+    @property
+    def name(self) -> str:
+        return self._database.name
 
     def crags(self) -> list[str]:
         crags = []
