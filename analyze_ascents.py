@@ -1,19 +1,12 @@
 """Script for analyzing ascents."""
 
 
-import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import utils
 from ascent import AscentDB
-
-
-def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("database", type=Path)
-    args = parser.parse_args()
-    return args
 
 
 def make_counts_table(counts: list[tuple[Any, int]]) -> str:
@@ -51,7 +44,7 @@ def analyze_ascents(database: Path) -> str:
 
 
 def main() -> None:
-    args = get_args()
+    args = utils.get_args()
     analysis = analyze_ascents(args.database)
     print(analysis)
 

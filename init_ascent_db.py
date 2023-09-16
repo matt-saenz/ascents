@@ -1,19 +1,13 @@
 """Script for initializing ascent database."""
 
 
-import argparse
 import sqlite3
 import sys
 from pathlib import Path
 
+import utils
+
 GradeInfoData = list[tuple[str, int, str | None]]
-
-
-def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("database", type=Path)
-    args = parser.parse_args()
-    return args
 
 
 def generate_grade_info_data() -> GradeInfoData:
@@ -72,7 +66,7 @@ def init_ascent_db(database: Path) -> None:
 
 
 def main() -> None:
-    args = get_args()
+    args = utils.get_args()
     init_ascent_db(args.database)
 
 

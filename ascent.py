@@ -33,6 +33,16 @@ class Route:
     def __str__(self) -> str:
         return f"{self.name} {self.grade} at {self.crag}"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Route):
+            return NotImplemented
+
+        return (
+            self.name == other.name
+            and self.grade == other.grade
+            and self.crag == other.crag
+        )
+
 
 class Ascent:
     def __init__(self, route: Route, date: datetime.date) -> None:
@@ -45,9 +55,6 @@ class Ascent:
 
     @date.setter
     def date(self, value: datetime.date) -> None:
-        if not isinstance(value, datetime.date):
-            raise AscentError("date must be a datetime.date object")
-
         if value > datetime.date.today():
             raise AscentError("date cannot be in the future")
 
@@ -55,6 +62,12 @@ class Ascent:
 
     def __str__(self) -> str:
         return f"{self.route} on {self.date}"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Ascent):
+            return NotImplemented
+
+        return self.route == other.route and self.date == other.date
 
 
 class AscentDB:
@@ -117,6 +130,50 @@ class AscentDB:
             VALUES(?, ?, ?, ?)
             """,
             (ascent.route.name, ascent.route.grade, ascent.route.crag, ascent.date),
+        )
+
+        self._connection.commit()
+
+    def find_ascent(self, route: Route) -> Ascent:
+        self._cursor.execute(
+            """
+            SELECT date
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            """,
+            (route.name, route.grade, route.crag),
+        )
+
+        row = self._cursor.fetchone()
+
+        if row is None:
+            raise AscentDBError("No ascent found matching provided route")
+
+        date = datetime.date.fromisoformat(row[0])
+
+        return Ascent(route, date)
+
+    def drop_ascent(self, route: Route) -> None:
+        self._cursor.execute(
+            """
+            SELECT 1
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            """,
+            (route.name, route.grade, route.crag),
+        )
+
+        row = self._cursor.fetchone()
+
+        if row is None:
+            raise AscentDBError("No ascent found matching provided route")
+
+        self._cursor.execute(
+            """
+            DELETE FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            """,
+            (route.name, route.grade, route.crag),
         )
 
         self._connection.commit()
