@@ -33,6 +33,12 @@ class Route:
     def __str__(self) -> str:
         return f"{self.name} {self.grade} at {self.crag}"
 
+    def __repr__(self) -> str:
+        return (
+            self.__class__.__qualname__
+            + f"({self.name!r}, {self.grade!r}, {self.crag!r})"
+        )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Route):
             return NotImplemented
@@ -62,6 +68,9 @@ class Ascent:
 
     def __str__(self) -> str:
         return f"{self.route} on {self.date}"
+
+    def __repr__(self) -> str:
+        return self.__class__.__qualname__ + f"({self.route!r}, {self.date!r})"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Ascent):

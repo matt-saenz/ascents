@@ -61,6 +61,9 @@ class TestRoute:
     def test_str(self, route: Route) -> None:
         assert str(route) == "Some Route 5.7 at Some Crag"
 
+    def test_repr(self, route: Route) -> None:
+        assert repr(route) == "Route('Some Route', '5.7', 'Some Crag')"
+
 
 @pytest.fixture
 def ascent(route: Route) -> Ascent:
@@ -102,6 +105,12 @@ class TestAscent:
 
     def test_str(self, ascent: Ascent) -> None:
         assert str(ascent) == "Some Route 5.7 at Some Crag on 2023-01-01"
+
+    def test_repr(self, ascent: Ascent) -> None:
+        assert (
+            repr(ascent)
+            == "Ascent(Route('Some Route', '5.7', 'Some Crag'), datetime.date(2023, 1, 1))"
+        )
 
 
 @pytest.fixture
