@@ -84,7 +84,7 @@ class AscentDB:
         self._cursor = self._connection.cursor()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore
+    def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore[no-untyped-def]
         self._connection.close()
 
     @property
