@@ -147,6 +147,24 @@ def db(ascents: Ascents) -> AscentDB:
 
 
 class TestAscentDB:
+    def test_no_connection(self) -> None:
+        db = AscentDB(Path("test.db"))
+
+        # Context has never been entered, so connection/
+        # cursor have never been created
+        # Attempting to operate out of context raises
+        # attribute error
+        with pytest.raises(AttributeError):
+            db.crags()
+
+    def test_connection_closed(self, db: AscentDB) -> None:
+        # Context has been entered (and exited), so connection
+        # has been created (and closed)
+        # Attempting to operate out of context raises closed
+        # connection error
+        with pytest.raises(sqlite3.ProgrammingError):
+            db.crags()
+
     def test_name(self, db: AscentDB) -> None:
         assert db.name == "test.db"
 
