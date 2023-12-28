@@ -1,4 +1,4 @@
-# ascents :climbing_man:
+# ascents-py :climbing_man:
 
 ## Overview
 
