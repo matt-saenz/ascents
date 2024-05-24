@@ -1,6 +1,3 @@
-"""Module defining Route, Ascent, and AscentDB classes."""
-
-
 import datetime
 import re
 import sqlite3
@@ -9,7 +6,12 @@ from typing import Self
 
 
 class Route:
-    def __init__(self, name: str, grade: str, crag: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        grade: str,
+        crag: str,
+    ) -> None:
         self.name = name
         self.grade = grade
         self.crag = crag
@@ -51,7 +53,11 @@ class Route:
 
 
 class Ascent:
-    def __init__(self, route: Route, date: datetime.date) -> None:
+    def __init__(
+        self,
+        route: Route,
+        date: datetime.date,
+    ) -> None:
         self.route = route
         self.date = date
 
@@ -241,12 +247,12 @@ class AscentDB:
 
 
 class RouteError(Exception):
-    """Raise if something goes wrong with a Route object."""
+    """Raise if something goes wrong with a Route."""
 
 
 class AscentError(Exception):
-    """Raise if something goes wrong with an Ascent object."""
+    """Raise if something goes wrong with an Ascent."""
 
 
 class AscentDBError(Exception):
-    """Raise if something goes wrong with an AscentDB object."""
+    """Raise if something goes wrong with an AscentDB."""

@@ -1,17 +1,14 @@
-"""Testing for the ascent module."""
-
-
 import datetime
 import sqlite3
 from pathlib import Path
 
 import pytest
 
-from ascent import (
+from ascents._models import (
     Ascent,
+    AscentError,
     AscentDB,
     AscentDBError,
-    AscentError,
     Route,
     RouteError,
 )

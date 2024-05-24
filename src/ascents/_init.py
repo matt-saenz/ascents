@@ -1,11 +1,5 @@
-"""Script for initializing ascent database."""
-
-
 import sqlite3
-import sys
 from pathlib import Path
-
-import utils
 
 GradeInfoData = list[tuple[str, int, str | None]]
 
@@ -25,7 +19,9 @@ def generate_grade_info_data() -> GradeInfoData:
 
 def init_ascent_db(database: Path) -> None:
     if database.exists():
-        sys.exit(f"Error: {database} already exists")
+        raise DatabaseAlreadyExistsError(
+            f"{database} already exists, cannot initialize"
+        )
 
     grade_info_data = generate_grade_info_data()
 
@@ -65,10 +61,5 @@ def init_ascent_db(database: Path) -> None:
         connection.close()
 
 
-def main() -> None:
-    args = utils.get_args()
-    init_ascent_db(args.database)
-
-
-if __name__ == "__main__":
-    main()
+class DatabaseAlreadyExistsError(Exception):
+    """Raise if database already exists."""
