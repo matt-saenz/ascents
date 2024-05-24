@@ -2,7 +2,7 @@
 
 ## Overview
 
-[Script](log_ascent.py) for logging rock climbing ascents powered by a [module](ascent.py) defining `Route`, `Ascent`, and `AscentDB` classes. Ascents are logged in a SQLite database table with the following fields:
+Command line app for logging rock climbing ascents. Ascents are logged in a SQLite database table with the following fields:
 
 1. `route`: Name of the route.
 2. `grade`: Grade of the route in terms of the Yosemite Decimal System (YDS).
@@ -13,18 +13,23 @@ An ascent is defined as a redpoint ascent (i.e., successfully leading the route 
 
 ## Example Usage
 
-(Note that these scripts have been aliased for convenience.)
+```
+$ ascents -h
+usage: ascents [-h] {init,log,drop,analyze} database
+```
 
 Initialize ascent database:
 
 ```
-$ init_ascent_db ascent.db
+$ ascents init ascent.db
+Initializing ascent database: ascent.db
+Successfully initialized database
 ```
 
 Log an ascent:
 
 ```
-$ log_ascent ascent.db
+$ ascents log ascent.db
 Enter the name of the route: Slither
 Enter the grade of the route: 5.7
 Enter the name of the crag where the route is located: Reimers Ranch
@@ -43,3 +48,22 @@ $ sqlite3 --markdown ascent.db 'select * from ascents'
 |  route  | grade |     crag      |    date    |
 |---------|-------|---------------|------------|
 | Slither | 5.7   | Reimers Ranch | 2022-06-27 |
+
+Analyze the database:
+
+```
+$ ascents analyze ascent.db
+Analysis of ascents in ascent.db
+Generated on Fri May 24 2024 09:37:25 AM
+
+Total number of ascents: 1
+
+Count of ascents by year:
+   1  2022
+
+Count of ascents by crag:
+   1  Reimers Ranch
+
+Count of ascents by grade:
+   1  5.7
+```

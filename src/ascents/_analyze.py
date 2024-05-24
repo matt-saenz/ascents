@@ -1,22 +1,17 @@
-"""Script for analyzing ascents."""
-
-
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-import utils
-from ascent import AscentDB
+from ascents._models import AscentDB
 
 
 def make_counts_table(counts: list[tuple[Any, int]]) -> str:
     return "\n".join([f"{count:>4}  {value}" for value, count in counts])
 
 
-def analyze_ascents(database: Path) -> str:
+def analyze_ascent_db(db: AscentDB) -> str:
     time_stamp = datetime.now().strftime("%a %b %d %Y %I:%M:%S %p")
 
-    with AscentDB(database) as db:
+    with db:
         total_count = db.total_count()
         year_counts = db.year_counts()
         crag_counts = db.crag_counts()
@@ -24,7 +19,7 @@ def analyze_ascents(database: Path) -> str:
 
     analysis = "\n".join(
         [
-            f"Analysis of ascents in {database}",
+            f"Analysis of ascents in {db.name}",
             f"Generated on {time_stamp}",
             "",
             f"Total number of ascents: {total_count}",
@@ -41,13 +36,3 @@ def analyze_ascents(database: Path) -> str:
     )
 
     return analysis
-
-
-def main() -> None:
-    args = utils.get_args()
-    analysis = analyze_ascents(args.database)
-    print(analysis)
-
-
-if __name__ == "__main__":
-    main()

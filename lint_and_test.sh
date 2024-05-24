@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-black --check --diff *.py
-isort --check --diff --force-grid-wrap 2 --profile black *.py
-mypy --strict *.py
-flake8 --extend-ignore E501 *.py
-pytest --quiet test_ascent.py
+black --check --diff src tests
+isort --check --diff --only-sections --profile black src tests
+mypy --strict src tests
+flake8 --extend-ignore E501 src tests
+pip install .
+pytest --quiet tests
