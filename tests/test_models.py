@@ -1,9 +1,9 @@
 import datetime
 import sqlite3
-from pathlib import Path
 
 import pytest
 
+from tests.conftest import Ascents
 from ascents._models import (
     Ascent,
     AscentError,
@@ -12,8 +12,6 @@ from ascents._models import (
     Route,
     RouteError,
 )
-
-Ascents = list[Ascent]
 
 
 @pytest.fixture
@@ -110,58 +108,16 @@ class TestAscent:
         )
 
 
-@pytest.fixture
-def ascents() -> Ascents:
-    date_2022 = datetime.date(2022, 12, 1)
-    date_2023 = datetime.date(2023, 1, 1)
-
-    ascents = [
-        Ascent(Route("Classic Route", "5.12a", "Some Crag"), date_2023),
-        Ascent(Route("Some Other Route", "5.9", "Some Crag"), date_2022),
-        Ascent(Route("New Route", "5.10d", "New Crag"), date_2022),
-        Ascent(Route("Another Route", "5.10a", "Another Crag"), date_2023),
-        Ascent(Route("Some Route", "5.7", "Some Crag"), date_2023),
-        Ascent(Route("Old Route", "5.11a", "Old Crag"), date_2022),
-        Ascent(Route("Cool Route", "5.10a", "Some Crag"), date_2022),
-        Ascent(Route("Last Route", "5.7", "Old Crag"), date_2023),
-    ]
-
-    return ascents
-
-
-@pytest.fixture
-def db(ascents: Ascents) -> AscentDB:
-    test_db = Path("test.db")
-
-    if not test_db.exists():
-        raise FileNotFoundError("test.db must be initialized to test")
-
-    connection = sqlite3.connect(test_db)
-
-    try:
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM ascents")
-        connection.commit()
-    finally:
-        connection.close()
-
-    with AscentDB(test_db) as db:
-        for ascent in ascents:
-            db.log_ascent(ascent)
-
-    return db
-
-
 class TestAscentDB:
-    def test_no_connection(self) -> None:
-        db = AscentDB(Path("test.db"))
+    def test_no_connection(self, db: AscentDB) -> None:
+        new_db = AscentDB(db._database)
 
         # Context has never been entered, so connection/
         # cursor have never been created
         # Attempting to operate out of context raises
         # attribute error
         with pytest.raises(AttributeError):
-            db.crags()
+            new_db.crags()
 
     def test_connection_closed(self, db: AscentDB) -> None:
         # Context has been entered (and exited), so connection
@@ -172,7 +128,7 @@ class TestAscentDB:
             db.crags()
 
     def test_name(self, db: AscentDB) -> None:
-        assert db.name == "test.db"
+        assert db.name == db._database.name
 
     def test_crags(self, db: AscentDB) -> None:
         with db:
@@ -192,10 +148,13 @@ class TestAscentDB:
     ) -> None:
         with db:
             for ascent in ascents:
-                with pytest.raises(AscentDBError):
+                with pytest.raises(
+                    AscentDBError,
+                    match=rf"^That ascent was already logged with a date of {ascent.date}$",
+                ):
                     db.log_ascent(ascent)
 
-    def test_find_ascent(
+    def test_find_ascent_found(
         self,
         db: AscentDB,
         ascents: Ascents,
@@ -204,6 +163,17 @@ class TestAscentDB:
             for ascent in ascents:
                 found = db.find_ascent(ascent.route)
                 assert found == ascent
+
+    def test_find_ascent_not_found(
+        self,
+        db: AscentDB,
+    ) -> None:
+        with db:
+            with pytest.raises(
+                AscentDBError,
+                match=r"^No ascent found matching provided route$",
+            ):
+                db.find_ascent(Route("Does Not Exist", "5.7", "Some Crag"))
 
     def test_drop_ascent(
         self,
@@ -214,6 +184,14 @@ class TestAscentDB:
             for ascent in ascents:
                 db.drop_ascent(ascent.route)
 
+                with pytest.raises(
+                    AscentDBError,
+                    match=r"^No ascent found matching provided route$",
+                ):
+                    db.drop_ascent(ascent.route)
+
+        # DB connection has at this point been closed
+        # Confirm that changes were actually committed
         with db:
             total_count = db.total_count()
 
