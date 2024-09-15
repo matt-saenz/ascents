@@ -2,7 +2,7 @@ import datetime
 import re
 import sqlite3
 from pathlib import Path
-from typing import Self
+from typing import Self, Optional
 
 
 class Route:
@@ -85,6 +85,20 @@ class Ascent:
         return self.route == other.route and self.date == other.date
 
 
+# Starting with Python 3.12, default adapters/converters (including
+# for datetime.date) are deprecated
+def adapt_date(date: datetime.date) -> str:
+    return date.isoformat()
+
+
+def convert_date(date: bytes) -> datetime.date:
+    return datetime.date.fromisoformat(date.decode())
+
+
+sqlite3.register_adapter(datetime.date, adapt_date)
+sqlite3.register_converter("date", convert_date)
+
+
 class AscentDB:
     def __init__(self, database: Path) -> None:
         if not database.exists():
@@ -95,8 +109,13 @@ class AscentDB:
         self._database = database
 
     def __enter__(self) -> Self:
-        self._connection = sqlite3.connect(self._database)
+        self._connection = sqlite3.connect(
+            database=self._database,
+            detect_types=sqlite3.PARSE_COLNAMES,
+        )
+
         self._cursor = self._connection.cursor()
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore[no-untyped-def]
@@ -152,7 +171,7 @@ class AscentDB:
     def find_ascent(self, route: Route) -> Ascent:
         self._cursor.execute(
             """
-            SELECT date
+            SELECT date AS "date [date]"
             FROM ascents
             WHERE route = ? AND grade = ? AND crag = ?
             """,
@@ -164,7 +183,7 @@ class AscentDB:
         if row is None:
             raise AscentDBError("No ascent found matching provided route")
 
-        date = datetime.date.fromisoformat(row[0])
+        date: datetime.date = row[0]
 
         return Ascent(route, date)
 
@@ -244,6 +263,124 @@ class AscentDB:
         )
 
         return self._cursor.fetchall()
+
+    def latest_date(self) -> datetime.date | None:
+        self._cursor.execute(
+            """
+            SELECT max(date) AS "latest_date [date]"
+            FROM ascents
+            """
+        )
+
+        latest_date: datetime.date | None = self._cursor.fetchone()[0]
+
+        return latest_date
+
+    def max_grade(self) -> str | None:
+        self._cursor.execute(
+            """
+            SELECT ascents.grade
+            FROM ascents
+            LEFT JOIN grade_info USING(grade)
+            ORDER BY grade_info.grade_number DESC, grade_info.grade_letter DESC
+            LIMIT 1
+            """
+        )
+
+        row = self._cursor.fetchone()
+
+        if row is None:
+            return None
+
+        max_grade: str = row[0]
+
+        return max_grade
+
+    def max_grade_by_year(self) -> list[tuple[int, str]]:
+        self._cursor.execute(
+            """
+            WITH year_and_grade AS (
+                SELECT CAST(strftime('%Y', date) AS INTEGER) AS year, grade
+                FROM ascents
+            ),
+            grade_sorted_within_year AS (
+                SELECT yg.year, yg.grade, row_number() OVER win AS row_number
+                FROM year_and_grade AS yg
+                LEFT JOIN grade_info AS g USING(grade)
+                WINDOW win AS (
+                    PARTITION BY yg.year
+                    ORDER BY g.grade_number DESC, g.grade_letter DESC
+                )
+            )
+            SELECT year, grade
+            FROM grade_sorted_within_year
+            WHERE row_number = 1
+            ORDER BY year
+            """
+        )
+
+        return self._cursor.fetchall()
+
+    def ascents(
+        self,
+        search: Optional["Search"] = None,
+    ) -> list[Ascent]:
+        if search is None:
+            search = Search()
+
+        filters = {
+            "route": search.route,
+            "grade": search.grade,
+            "crag": search.crag,
+            "date": search.date,
+        }
+
+        params = {
+            column: value for column, value in filters.items() if value is not None
+        }
+
+        compare = "GLOB" if search.glob else "="
+        where_clause = "WHERE 1 "
+
+        conditions = " ".join(
+            [f"AND a.{column} {compare} :{column}" for column, _ in params.items()]
+        )
+
+        where_clause += conditions
+
+        statement = f"""
+        SELECT a.route, a.grade, a.crag, a.date AS "date [date]"
+        FROM ascents AS a
+        LEFT JOIN grade_info AS g USING(grade)
+        {where_clause}
+        ORDER BY g.grade_number DESC, g.grade_letter DESC, a.date DESC, a.route, a.crag
+        """
+
+        self._cursor.execute(statement, params)
+
+        ascents = []
+
+        for name, grade, crag, date in self._cursor:
+            ascents.append(Ascent(Route(name, grade, crag), date))
+
+        return ascents
+
+
+class Search:
+    def __init__(
+        self,
+        *,
+        route: str | None = None,
+        grade: str | None = None,
+        crag: str | None = None,
+        date: datetime.date | str | None = None,
+        glob: bool = False,
+    ) -> None:
+        self.route = route
+        self.grade = grade
+        self.crag = crag
+        self.date = date
+        self.glob = glob
 
 
 class RouteError(Exception):

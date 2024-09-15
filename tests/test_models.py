@@ -3,14 +3,16 @@ import sqlite3
 
 import pytest
 
-from tests.conftest import Ascents
+from tests.conftest import Ascents, DATE_2022, DATE_2023
+from ascents import _models
 from ascents._models import (
+    Route,
+    RouteError,
     Ascent,
     AscentError,
     AscentDB,
     AscentDBError,
-    Route,
-    RouteError,
+    Search,
 )
 
 
@@ -106,6 +108,14 @@ class TestAscent:
             repr(ascent)
             == "Ascent(Route('Some Route', '5.7', 'Some Crag'), datetime.date(2023, 1, 1))"
         )
+
+
+def test_adapt_date() -> None:
+    assert _models.adapt_date(datetime.date(2023, 1, 1)) == "2023-01-01"
+
+
+def test_convert_date() -> None:
+    assert _models.convert_date(b"2023-01-01") == datetime.date(2023, 1, 1)
 
 
 class TestAscentDB:
@@ -235,3 +245,87 @@ class TestAscentDB:
             ("5.11a", 1),
             ("5.12a", 1),
         ]
+
+    def test_latest_date(self, db: AscentDB) -> None:
+        with db:
+            assert db.latest_date() == datetime.date(2023, 1, 1)
+
+    def test_latest_date_empty(self, empty_db: AscentDB) -> None:
+        with empty_db:
+            assert empty_db.latest_date() is None
+
+    def test_max_grade(self, db: AscentDB) -> None:
+        with db:
+            assert db.max_grade() == "5.12a"
+
+    def test_max_grade_empty(self, empty_db: AscentDB) -> None:
+        with empty_db:
+            assert empty_db.max_grade() is None
+
+    def test_max_grade_by_year(self, db: AscentDB) -> None:
+        with db:
+            max_grade_by_year = db.max_grade_by_year()
+
+        assert max_grade_by_year == [
+            (2022, "5.11a"),
+            (2023, "5.12a"),
+        ]
+
+    @pytest.mark.parametrize(
+        "search,expected",
+        [
+            (
+                Search(),
+                [
+                    Ascent(Route("Classic Route", "5.12a", "Some Crag"), DATE_2023),
+                    Ascent(Route("Old Route", "5.11a", "Old Crag"), DATE_2022),
+                    Ascent(Route("New Route", "5.10d", "New Crag"), DATE_2022),
+                    Ascent(Route("Another Route", "5.10a", "Another Crag"), DATE_2023),
+                    Ascent(Route("Cool Route", "5.10a", "Some Crag"), DATE_2022),
+                    Ascent(Route("Some Other Route", "5.9", "Some Crag"), DATE_2022),
+                    Ascent(Route("Last Route", "5.7", "Old Crag"), DATE_2023),
+                    Ascent(Route("Some Route", "5.7", "Some Crag"), DATE_2023),
+                ],
+            ),
+            (
+                Search(grade="5.12a"),
+                [
+                    Ascent(Route("Classic Route", "5.12a", "Some Crag"), DATE_2023),
+                ],
+            ),
+            (
+                Search(grade="5.10a", date=DATE_2022),
+                [
+                    Ascent(Route("Cool Route", "5.10a", "Some Crag"), DATE_2022),
+                ],
+            ),
+            (
+                # Globbing not actually enabled, matches nothing
+                Search(grade="5.10?"),
+                [],
+            ),
+            (
+                Search(grade="5.10?", glob=True),
+                [
+                    Ascent(Route("New Route", "5.10d", "New Crag"), DATE_2022),
+                    Ascent(Route("Another Route", "5.10a", "Another Crag"), DATE_2023),
+                    Ascent(Route("Cool Route", "5.10a", "Some Crag"), DATE_2022),
+                ],
+            ),
+            (
+                # Search is still case sensitive in glob mode
+                Search(route="some route", glob=True),
+                [],
+            ),
+        ],
+    )
+    def test_ascents(
+        self,
+        search: Search,
+        expected: Ascents,
+        db: AscentDB,
+    ) -> None:
+        with db:
+            actual = db.ascents(search)
+
+        assert actual == expected
