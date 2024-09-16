@@ -324,7 +324,13 @@ class AscentDB:
     def ascents(
         self,
         search: Optional["Search"] = None,
+        order: str = "date",
     ) -> list[Ascent]:
+        orders = {"date", "grade"}
+
+        if order not in orders:
+            raise AscentDBError(f"Invalid order '{order}', valid options are {orders}")
+
         if search is None:
             search = Search()
 
@@ -348,12 +354,24 @@ class AscentDB:
 
         where_clause += conditions
 
+        order_by_clause = "ORDER BY "
+        date_order = "a.date DESC, "
+        grade_order = "g.grade_number DESC, g.grade_letter DESC, "
+        rest_order = "a.route, a.crag"
+
+        if order == "date":
+            order_by_clause += date_order + grade_order
+        else:
+            order_by_clause += grade_order + date_order
+
+        order_by_clause += rest_order
+
         statement = f"""
         SELECT a.route, a.grade, a.crag, a.date AS "date [date]"
         FROM ascents AS a
         LEFT JOIN grade_info AS g USING(grade)
         {where_clause}
-        ORDER BY g.grade_number DESC, g.grade_letter DESC, a.date DESC, a.route, a.crag
+        {order_by_clause}
         """
 
         self._cursor.execute(statement, params)

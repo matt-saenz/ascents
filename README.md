@@ -51,6 +51,7 @@ route:
 grade: 5.7
 crag:
 date: 2022*
+Order by 'date' or 'grade'? date
 Result(s):
 Slither 5.7 at Reimers Ranch on 2022-06-27
 ```
@@ -60,7 +61,7 @@ Analyze the database:
 ```
 $ ascents analyze ascent.db
 Analysis of ascents in ascent.db
-Generated on Sat Sep 14 2024 04:40:27 PM
+Generated on Mon Sep 16 2024 01:13:24 PM
 
 Total number of ascents: 1
 

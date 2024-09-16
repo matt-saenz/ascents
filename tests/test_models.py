@@ -272,10 +272,11 @@ class TestAscentDB:
         ]
 
     @pytest.mark.parametrize(
-        "search,expected",
+        "search,order,expected",
         [
             (
-                Search(),
+                None,
+                "grade",
                 [
                     Ascent(Route("Classic Route", "5.12a", "Some Crag"), DATE_2023),
                     Ascent(Route("Old Route", "5.11a", "Old Crag"), DATE_2022),
@@ -288,13 +289,29 @@ class TestAscentDB:
                 ],
             ),
             (
+                None,
+                "date",
+                [
+                    Ascent(Route("Classic Route", "5.12a", "Some Crag"), DATE_2023),
+                    Ascent(Route("Another Route", "5.10a", "Another Crag"), DATE_2023),
+                    Ascent(Route("Last Route", "5.7", "Old Crag"), DATE_2023),
+                    Ascent(Route("Some Route", "5.7", "Some Crag"), DATE_2023),
+                    Ascent(Route("Old Route", "5.11a", "Old Crag"), DATE_2022),
+                    Ascent(Route("New Route", "5.10d", "New Crag"), DATE_2022),
+                    Ascent(Route("Cool Route", "5.10a", "Some Crag"), DATE_2022),
+                    Ascent(Route("Some Other Route", "5.9", "Some Crag"), DATE_2022),
+                ],
+            ),
+            (
                 Search(grade="5.12a"),
+                "grade",
                 [
                     Ascent(Route("Classic Route", "5.12a", "Some Crag"), DATE_2023),
                 ],
             ),
             (
                 Search(grade="5.10a", date=DATE_2022),
+                "grade",
                 [
                     Ascent(Route("Cool Route", "5.10a", "Some Crag"), DATE_2022),
                 ],
@@ -302,10 +319,12 @@ class TestAscentDB:
             (
                 # Globbing not actually enabled, matches nothing
                 Search(grade="5.10?"),
+                "grade",
                 [],
             ),
             (
                 Search(grade="5.10?", glob=True),
+                "grade",
                 [
                     Ascent(Route("New Route", "5.10d", "New Crag"), DATE_2022),
                     Ascent(Route("Another Route", "5.10a", "Another Crag"), DATE_2023),
@@ -315,17 +334,24 @@ class TestAscentDB:
             (
                 # Search is still case sensitive in glob mode
                 Search(route="some route", glob=True),
+                "grade",
                 [],
             ),
         ],
     )
     def test_ascents(
         self,
-        search: Search,
+        search: Search | None,
+        order: str,
         expected: Ascents,
         db: AscentDB,
     ) -> None:
         with db:
-            actual = db.ascents(search)
+            actual = db.ascents(search, order)
 
         assert actual == expected
+
+    def test_ascents_invalid_order(self, db: AscentDB) -> None:
+        with db:
+            with pytest.raises(AscentDBError):
+                db.ascents(order="invalid")

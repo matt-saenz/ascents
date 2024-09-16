@@ -160,8 +160,10 @@ def search(database: Path) -> None:
         glob=True,
     )
 
+    order = input("Order by 'date' or 'grade'? ")
+
     with db:
-        ascents = db.ascents(search)
+        ascents = db.ascents(search, order)
 
     print("Result(s):")
 
