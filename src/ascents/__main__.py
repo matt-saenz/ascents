@@ -160,7 +160,9 @@ def search(database: Path) -> None:
         glob=True,
     )
 
-    order = input("Order by 'date' or 'grade'? ")
+    default = "date"
+    order = input(f"Order by 'date' or 'grade' ({default=})? ")
+    order = order if order else default
 
     with db:
         ascents = db.ascents(search, order)

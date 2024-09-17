@@ -51,7 +51,7 @@ route:
 grade: 5.7
 crag:
 date: 2022*
-Order by 'date' or 'grade'? date
+Order by 'date' or 'grade' (default='date')?
 Result(s):
 Slither 5.7 at Reimers Ranch on 2022-06-27
 ```
