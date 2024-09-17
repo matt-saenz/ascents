@@ -1,18 +1,21 @@
 import argparse
 import datetime
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from ascents._analyze import analyze_ascent_db
 from ascents._init import init_ascent_db, DatabaseAlreadyExistsError
 from ascents._models import (
+    Route,
+    RouteError,
     Ascent,
     AscentError,
     AscentDB,
     AscentDBError,
-    Route,
-    RouteError,
+    Search,
 )
+from ascents._utils import make_ascents_table
 
 
 def get_args() -> argparse.Namespace:
@@ -20,7 +23,7 @@ def get_args() -> argparse.Namespace:
 
     parser.add_argument(
         "command",
-        choices=["init", "log", "drop", "analyze"],
+        choices=COMMANDS.keys(),
         help="Action to take",
     )
 
@@ -138,17 +141,53 @@ def analyze(database: Path) -> None:
     print(analysis)
 
 
+def search(database: Path) -> None:
+    db = AscentDB(database)
+
+    print(f"Searching {db.name}")
+    print("Case-sensitive matching, globbing allowed")
+    print("Empty field matches everything")
+
+    def input_or_none(prompt: str) -> str | None:
+        resp = input(f"{prompt}: ")
+        return resp if resp else None
+
+    search = Search(
+        route=input_or_none("route"),
+        grade=input_or_none("grade"),
+        crag=input_or_none("crag"),
+        date=input_or_none("date"),
+        glob=True,
+    )
+
+    default = "date"
+    order = input(f"Order by 'date' or 'grade' ({default=})? ")
+    order = order if order else default
+
+    with db:
+        ascents = db.ascents(search, order)
+
+    print("Result(s):")
+
+    if ascents:
+        print(make_ascents_table(ascents))
+    else:
+        print("No ascents found")
+
+
+COMMANDS: dict[str, Callable[[Path], None]] = {
+    "init": init,
+    "log": log,
+    "drop": drop,
+    "analyze": analyze,
+    "search": search,
+}
+
+
 def main() -> None:
     args = get_args()
 
-    commands = {
-        "init": init,
-        "log": log,
-        "drop": drop,
-        "analyze": analyze,
-    }
-
-    command = commands[args.command]
+    command = COMMANDS[args.command]
 
     try:
         command(args.database)

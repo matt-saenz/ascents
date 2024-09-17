@@ -15,7 +15,8 @@ An ascent is defined as a redpoint ascent (i.e., successfully leading the route 
 
 ```
 $ ascents -h
-usage: ascents [-h] {init,log,drop,analyze} database
+usage: ascents [-h] {init,log,drop,analyze,search} database
+--snip--
 ```
 
 Initialize ascent database:
@@ -39,22 +40,28 @@ Log the above ascent in ascent.db (y/n)? y
 Successfully logged the above ascent
 ```
 
-Confirm its existence:
+Search the database:
 
 ```
-$ sqlite3 --markdown ascent.db 'select * from ascents'
+$ ascents search ascent.db
+Searching ascent.db
+Case-sensitive matching, globbing allowed
+Empty field matches everything
+route:
+grade: 5.7
+crag:
+date: 2022*
+Order by 'date' or 'grade' (default='date')?
+Result(s):
+Slither 5.7 at Reimers Ranch on 2022-06-27
 ```
-
-|  route  | grade |     crag      |    date    |
-|---------|-------|---------------|------------|
-| Slither | 5.7   | Reimers Ranch | 2022-06-27 |
 
 Analyze the database:
 
 ```
 $ ascents analyze ascent.db
 Analysis of ascents in ascent.db
-Generated on Fri May 24 2024 09:37:25 AM
+Generated on Mon Sep 16 2024 01:13:24 PM
 
 Total number of ascents: 1
 
@@ -66,4 +73,5 @@ Count of ascents by crag:
 
 Count of ascents by grade:
    1  5.7
+--snip--
 ```
