@@ -18,17 +18,14 @@ $ ascents -h
 usage: ascents [-h] [-V] {init,log,drop,analyze,search} database
 --snip--
 ```
-
 Initialize ascent database:
-
 ```
 $ ascents init ascent.db
 Initializing ascent database: ascent.db
 Successfully initialized database
 ```
-
 Log an ascent:
-
+<!-- Slither 5.7 at Reimers Ranch on 2022-06-27 -->
 ```
 $ ascents log ascent.db
 Enter the name of the route: Slither
@@ -39,9 +36,8 @@ Ascent to be logged: Slither 5.7 at Reimers Ranch on 2022-06-27
 Log the above ascent in ascent.db (y/n)? y
 Successfully logged the above ascent
 ```
-
 Search the database:
-
+<!-- grade: 5.7, date: 2022*, accept default order -->
 ```
 $ ascents search ascent.db
 Searching ascent.db
@@ -55,13 +51,11 @@ Order by 'date' or 'grade' (default='date')?
 Result(s):
 Slither 5.7 at Reimers Ranch on 2022-06-27
 ```
-
 Analyze the database:
-
 ```
 $ ascents analyze ascent.db
 Analysis of ascents in ascent.db
-Generated on Mon Sep 16 2024 01:13:24 PM
+Generated on Thu Sep 19 2024 01:53:44 PM
 
 Total number of ascents: 1
 
