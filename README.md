@@ -15,7 +15,7 @@ An ascent is defined as a redpoint ascent (i.e., successfully leading the route 
 
 ```
 $ ascents -h
-usage: ascents [-h] {init,log,drop,analyze,search} database
+usage: ascents [-h] [-V] {init,log,drop,analyze,search} database
 --snip--
 ```
 

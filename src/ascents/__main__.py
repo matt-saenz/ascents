@@ -2,6 +2,7 @@ import argparse
 import datetime
 import sys
 from collections.abc import Callable
+from importlib.metadata import version
 from pathlib import Path
 
 from ascents._analyze import analyze_ascent_db
@@ -20,6 +21,13 @@ from ascents._utils import make_ascents_table
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=version("ascents"),
+    )
 
     parser.add_argument(
         "command",
