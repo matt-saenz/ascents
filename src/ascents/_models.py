@@ -112,6 +112,7 @@ class AscentDB:
         self._connection = sqlite3.connect(
             database=self._database,
             detect_types=sqlite3.PARSE_COLNAMES,
+            autocommit=False,
         )
 
         self._cursor = self._connection.cursor()

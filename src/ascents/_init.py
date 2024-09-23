@@ -25,7 +25,10 @@ def init_ascent_db(database: Path) -> None:
 
     grade_info_data = generate_grade_info_data()
 
-    connection = sqlite3.connect(database)
+    connection = sqlite3.connect(
+        database=database,
+        autocommit=False,
+    )
 
     try:
         cursor = connection.cursor()
