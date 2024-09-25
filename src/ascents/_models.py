@@ -1,8 +1,9 @@
 import datetime
 import re
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, Optional
+from typing import Self
 
 
 class Route:
@@ -97,6 +98,15 @@ def convert_date(date: bytes) -> datetime.date:
 
 sqlite3.register_adapter(datetime.date, adapt_date)
 sqlite3.register_converter("date", convert_date)
+
+
+@dataclass(kw_only=True)
+class Search:
+    route: str | None = None
+    grade: str | None = None
+    crag: str | None = None
+    date: datetime.date | str | None = None
+    glob: bool = False
 
 
 class AscentDB:
@@ -324,7 +334,7 @@ class AscentDB:
 
     def ascents(
         self,
-        search: Optional["Search"] = None,
+        search: Search | None = None,
         order: str = "date",
     ) -> list[Ascent]:
         orders = {"date", "grade"}
@@ -383,23 +393,6 @@ class AscentDB:
             ascents.append(Ascent(Route(name, grade, crag), date))
 
         return ascents
-
-
-class Search:
-    def __init__(
-        self,
-        *,
-        route: str | None = None,
-        grade: str | None = None,
-        crag: str | None = None,
-        date: datetime.date | str | None = None,
-        glob: bool = False,
-    ) -> None:
-        self.route = route
-        self.grade = grade
-        self.crag = crag
-        self.date = date
-        self.glob = glob
 
 
 class RouteError(Exception):
